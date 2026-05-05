@@ -1,0 +1,27 @@
+.app-root {
+    -fx-background-color: #f7f7fb;
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+}
+
+.app-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+}
+
+.app-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: #555555;
+}
+
+.titled-pane {
+    -fx-font-size: 13px;
+}
+
+.combo-box,
+.spinner {
+    -fx-pref-width: 260px;
+}
+
+.status-label {
+    -fx-text-fill: #444444;
+}
