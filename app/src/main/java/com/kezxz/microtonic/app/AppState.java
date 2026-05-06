@@ -8,18 +8,23 @@ import javafx.beans.property.StringProperty;
 /**
  * Holds the current user-selected application settings.
  *
- * This is intentionally simple for now. Later, other parts of the app will read
- * from this state when deciding how to tune notes and produce sound.
+ * JavaFX properties are used here so UI controls can bind directly to this state.
+ * For example, when the user changes the tuning dropdown, the tuningSystem property updates automatically.
+ *
+ * This class does not perform tuning, MIDI, or sound logic. It only stores state.
  */
 public final class AppState {
 
-    private final StringProperty tuningSystem = new SimpleStringProperty("12-TET");
-    private final StringProperty tonic = new SimpleStringProperty("C");
-    private final IntegerProperty nTetDivisions = new SimpleIntegerProperty(12);
-    private final StringProperty instrument = new SimpleStringProperty("Acoustic Grand Piano");
-    private final StringProperty inputMode = new SimpleStringProperty("Computer Keyboard");
-    private final StringProperty waveform = new SimpleStringProperty("Sine");
+    private final StringProperty tuningSystem = new SimpleStringProperty("12-TET");                // currently seleceted tuning system
+    private final StringProperty tonic = new SimpleStringProperty("C");                           // currently selected tonic
+    private final IntegerProperty nTetDivisions = new SimpleIntegerProperty(12);                 // number of divisions for N-TET tuning
+    private final StringProperty instrument = new SimpleStringProperty("Acoustic Grand Piano"); // currently selected instrument
+    private final StringProperty inputMode = new SimpleStringProperty("Computer Keyboard");    // currently selected input mode
+    private final StringProperty waveform = new SimpleStringProperty("Sine");                 // currently selected waveform
 
+    /**
+     * Returns the JavaFX property itself so UI controls can bind to it.
+     */
     public StringProperty tuningSystemProperty() {
         return tuningSystem;
     }
