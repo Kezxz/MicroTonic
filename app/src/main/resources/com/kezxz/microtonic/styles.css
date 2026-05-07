@@ -1,5 +1,5 @@
 .app-root {
-    -fx-background-color: #f7f7fb;
+    -fx-background-color: pink;
     -fx-font-family: "Segoe UI", "Arial", sans-serif;
 }
 
@@ -10,16 +10,22 @@
 
 .app-subtitle {
     -fx-font-size: 14px;
-    -fx-text-fill: #555555;
+    -fx-text-fill: #444444;
 }
 
 .titled-pane {
     -fx-font-size: 13px;
 }
 
-.combo-box,
-.spinner {
+.combo-box, 
+.spinner .text-field {
+    -fx-background-color: lightgreen;
     -fx-pref-width: 260px;
+}
+
+.spinner .increment-arrow-button, 
+.spinner .decrement-arrow-button {
+    -fx-background-color: lightgreen;
 }
 
 .status-label {

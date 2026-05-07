@@ -95,10 +95,10 @@ public final class MainView {
         ComboBox<String> box = new ComboBox<>();
         box.getItems().addAll(
                 "12-TET",
-                "N-TET"
+                "N-TET",
                 "Just Intonation - 12-tone chromatic",
                 "Pythagorean",
-                "Meantone",
+                "Meantone"
         );
 
         // Bidirectional binding means:
