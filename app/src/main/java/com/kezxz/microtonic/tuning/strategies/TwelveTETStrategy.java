@@ -62,6 +62,6 @@ public final class TwelveTETStrategy implements TuningStrategy {
      * Simple label for debugging and future feedback display.
      */
     private String displayNameFor(int noteIndex) {
-        return "12-TET step " + noteIndex;
+        return "12-TET scale degree " + noteIndex;
     }
 }

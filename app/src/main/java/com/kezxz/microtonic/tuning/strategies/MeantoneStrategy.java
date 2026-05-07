@@ -119,14 +119,14 @@ public final class MeantoneStrategy implements TuningStrategy {
             int octaveOffset,
             double centsFromTonic
     ) {
-        return "Meantone step "
+        return "Meantone scale degree "
                 + noteIndex
-                + " - "
+                + " -- "
                 + DEGREE_NAMES[scaleDegree]
-                + " octave "
+                + " -- octave "
                 + octaveOffset
                 + " ("
                 + String.format("%.3f", centsFromTonic)
-                + " cents)";
+                + " cents above tonic)";
     }
 }

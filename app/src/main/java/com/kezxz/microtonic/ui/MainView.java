@@ -1,8 +1,11 @@
 package com.kezxz.microtonic.ui;
 
 import com.kezxz.microtonic.app.AppState;
+import com.kezxz.microtonic.tuning.TunedNote;
+import com.kezxz.microtonic.tuning.TuningEngine;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Spinner;
@@ -21,12 +24,14 @@ import javafx.scene.layout.VBox;
 public final class MainView {
 
     private final AppState appState;
+    private final TuningEngine tuningEngine;
 
     /**
      * The view needs access to AppState so controls can read and update settings.
      */
     public MainView(AppState appState) {
         this.appState = appState;
+        this.tuningEngine = new TuningEngine(appState);
     }
 
     /**
@@ -77,15 +82,71 @@ public final class MainView {
         TitledPane controlsPane = new TitledPane("Controls", controlsGrid);
         controlsPane.setCollapsible(false);
 
+        TitledPane debugPane = createTuningDebugPane();
+
         Label statusLabel = new Label("Ready. App state is connected; tuning engine comes next.");
         statusLabel.getStyleClass().add("status-label");
 
         // VBox stacks the title, subtitle, controls, and status vertically.
-        VBox root = new VBox(16, title, subtitle, controlsPane, statusLabel);
+        VBox root = new VBox(16, title, subtitle, controlsPane, debugPane, statusLabel);
         root.setPadding(new Insets(20));
         root.getStyleClass().add("app-root");
 
         return root;
+    }
+
+    /**
+     * Creates a small debug panel for manually testing tuning results.
+     *
+     * This is temporary-but-useful MVP tooling:
+     * - choose a note index
+     * - resolve it through the active tuning strategy
+     * - display the resulting frequency and tuning metadata
+     *
+     * Later, this same information can move into the real-time feedback panel.
+     */
+    private TitledPane createTuningDebugPane() {
+        Spinner<Integer> noteIndexSpinner = new Spinner<>(-48, 48, 0);
+        noteIndexSpinner.setEditable(true);
+
+        Button resolveButton = new Button("Resolve Note");
+
+        Label frequencyLabel = new Label("Frequency: —");
+        Label midiLabel = new Label("Nearest MIDI Note: —");
+        Label centsLabel = new Label("Cents Deviation: —");
+        Label nameLabel = new Label("Name: —");
+
+        resolveButton.setOnAction(event -> {
+            int noteIndex = noteIndexSpinner.getValue();
+            TunedNote tunedNote = tuningEngine.resolve(noteIndex);
+
+            frequencyLabel.setText(String.format("Frequency: %.3f Hz", tunedNote.frequencyHz()));
+            midiLabel.setText("Nearest MIDI Note: " + tunedNote.nearestMidiNote());
+            centsLabel.setText(String.format(
+                    "Cents Deviation: %.3f",
+                    tunedNote.centsDeviationFromNearest12Tet()
+            ));
+            nameLabel.setText("Name: " + tunedNote.displayName());
+        });
+
+        GridPane debugGrid = new GridPane();
+        debugGrid.setHgap(12);
+        debugGrid.setVgap(12);
+        debugGrid.setPadding(new Insets(16));
+
+        debugGrid.add(new Label("Note Index"), 0, 0);
+        debugGrid.add(noteIndexSpinner, 1, 0);
+        debugGrid.add(resolveButton, 2, 0);
+
+        debugGrid.add(frequencyLabel, 0, 1, 3, 1);
+        debugGrid.add(midiLabel, 0, 2, 3, 1);
+        debugGrid.add(centsLabel, 0, 3, 3, 1);
+        debugGrid.add(nameLabel, 0, 4, 3, 1);
+
+        TitledPane debugPane = new TitledPane("Tuning Debug", debugGrid);
+        debugPane.setCollapsible(false);
+
+        return debugPane;
     }
 
     /**

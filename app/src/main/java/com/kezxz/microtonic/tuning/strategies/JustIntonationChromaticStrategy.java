@@ -108,11 +108,11 @@ public final class JustIntonationChromaticStrategy implements TuningStrategy {
     }
 
     private String displayNameFor(int noteIndex, int scaleDegree, int octaveOffset) {
-        return "JI step "
+        return "JI scale degree "
                 + noteIndex
-                + " - "
+                + " -- "
                 + DEGREE_NAMES[scaleDegree]
-                + " octave "
+                + " -- octave "
                 + octaveOffset;
     }
 }

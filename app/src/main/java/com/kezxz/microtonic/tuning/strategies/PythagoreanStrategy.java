@@ -111,11 +111,11 @@ public final class PythagoreanStrategy implements TuningStrategy {
     }
 
     private String displayNameFor(int noteIndex, int scaleDegree, int octaveOffset) {
-        return "Pythagorean step "
+        return "Pythagorean scale degree "
                 + noteIndex
-                + " - "
+                + " -- "
                 + DEGREE_NAMES[scaleDegree]
-                + " octave "
+                + " -- octave "
                 + octaveOffset;
     }
 }

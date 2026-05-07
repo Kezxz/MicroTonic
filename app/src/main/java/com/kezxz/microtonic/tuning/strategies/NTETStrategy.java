@@ -61,6 +61,6 @@ public final class NTETStrategy implements TuningStrategy {
      * Simple label for debugging and future feedback display.
      */
     private String displayNameFor(int noteIndex, int divisions) {
-        return divisions + "-TET step " + noteIndex;
+        return divisions + "-TET scale degree -- " + noteIndex;
     }
 }
