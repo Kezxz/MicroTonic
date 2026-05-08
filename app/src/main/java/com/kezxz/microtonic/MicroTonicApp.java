@@ -49,6 +49,10 @@ public final class MicroTonicApp extends Application {
         stage.setMinWidth(520);
         stage.setMinHeight(400);
         stage.show();
+        stage.setAlwaysOnTop(true);
+        stage.toFront();
+        stage.requestFocus();
+        stage.setAlwaysOnTop(false);
     }
 
     public static void main(String[] args) {

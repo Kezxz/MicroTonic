@@ -9,6 +9,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Spinner;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
@@ -88,11 +89,20 @@ public final class MainView {
         statusLabel.getStyleClass().add("status-label");
 
         // VBox stacks the title, subtitle, controls, and status vertically.
-        VBox root = new VBox(16, title, subtitle, controlsPane, debugPane, statusLabel);
-        root.setPadding(new Insets(20));
-        root.getStyleClass().add("app-root");
+        VBox content = new VBox(16, title, subtitle, controlsPane, debugPane, statusLabel);
+        content.setPadding(new Insets(20));
+        content.getStyleClass().add("app-root");
 
-        return root;
+        ScrollPane scrollPane = new ScrollPane(content);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPannable(true);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
+        // make the VBox at least as tall as the visible ScrollPane area
+        content.minHeightProperty().bind(scrollPane.viewportBoundsProperty().map(bounds -> bounds.getHeight()));
+
+        return scrollPane;
     }
 
     /**
