@@ -85,7 +85,7 @@ public final class MainView {
 
         TitledPane debugPane = createTuningDebugPane();
 
-        Label statusLabel = new Label("Ready. App state is connected; tuning engine comes next.");
+        Label statusLabel = new Label("Tuning engine up and running. Wiring to computer keyboard and/or MIDI input next.");
         statusLabel.getStyleClass().add("status-label");
 
         // VBox stacks the title, subtitle, controls, and status vertically.
