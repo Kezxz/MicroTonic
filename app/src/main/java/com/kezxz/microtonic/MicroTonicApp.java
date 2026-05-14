@@ -19,11 +19,10 @@ import javafx.stage.Stage;
  * Most actual app logic should live elsewhere.
  */
 public final class MicroTonicApp extends Application {
+private MainView mainView;
 
     /**
      * Called automatically by JavaFX when the app starts.
-     *
-     * The Stage is the main application window.
      */
     @Override
     public void start(Stage stage) {
@@ -31,7 +30,7 @@ public final class MicroTonicApp extends Application {
         AppState appState = new AppState();
 
         // MainView builds the visual controls for the app.
-        MainView mainView = new MainView(appState);
+        mainView = new MainView(appState);
 
         // Parent is the root JavaFX node returned by the view.
         Parent root = mainView.build();
@@ -48,11 +47,23 @@ public final class MicroTonicApp extends Application {
         stage.setScene(scene);
         stage.setMinWidth(520);
         stage.setMinHeight(400);
+        stage.setOnCloseRequest(event -> closeMainView());
         stage.show();
         stage.setAlwaysOnTop(true);
         stage.toFront();
         stage.requestFocus();
         stage.setAlwaysOnTop(false);
+    }
+
+    private void closeMainView() {
+        if (mainView != null) {
+            mainView.close();
+        }
+    }     
+
+    @Override
+    public void stop() {
+        closeMainView();
     }
 
     public static void main(String[] args) {

@@ -23,7 +23,7 @@ import javafx.scene.layout.VBox;
  * For now, this is a simple JavaFX view bound directly to AppState.
  * Later, if the app grows, this can evolve into a fuller ViewModel pattern.
  */
-public final class MainView {
+public final class MainView implements AutoCloseable {
 
     private final AppState appState;
     private final TuningEngine tuningEngine;
@@ -266,5 +266,10 @@ public final class MainView {
         box.getItems().addAll("Sine", "Square", "Saw", "Triangle");
         box.valueProperty().bindBidirectional(appState.waveformProperty());
         return box;
+    }
+
+    @Override
+    public void close() {
+        midiSoundEngine.close();
     }
 }
