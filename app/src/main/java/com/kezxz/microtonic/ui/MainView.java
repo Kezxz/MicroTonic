@@ -3,6 +3,7 @@ package com.kezxz.microtonic.ui;
 import com.kezxz.microtonic.app.AppState;
 import com.kezxz.microtonic.tuning.TunedNote;
 import com.kezxz.microtonic.tuning.TuningEngine;
+import com.kezxz.microtonic.sound.midi.MidiSoundEngine;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
@@ -26,6 +27,7 @@ public final class MainView {
 
     private final AppState appState;
     private final TuningEngine tuningEngine;
+    private final MidiSoundEngine midiSoundEngine;
 
     /**
      * The view needs access to AppState so controls can read and update settings.
@@ -33,6 +35,7 @@ public final class MainView {
     public MainView(AppState appState) {
         this.appState = appState;
         this.tuningEngine = new TuningEngine(appState);
+        this.midiSoundEngine = new MidiSoundEngine();
     }
 
     /**
@@ -120,6 +123,7 @@ public final class MainView {
         noteIndexSpinner.setEditable(true);
 
         Button resolveButton = new Button("Resolve Note");
+        Button playButton = new Button("Play Test Note");
 
         Label frequencyLabel = new Label("Frequency: —");
         Label midiLabel = new Label("Nearest MIDI Note: —");
@@ -139,6 +143,21 @@ public final class MainView {
             nameLabel.setText("Name: " + tunedNote.displayName());
         });
 
+        playButton.setOnAction(event -> {
+            int noteIndex = noteIndexSpinner.getValue();
+            TunedNote tunedNote = tuningEngine.resolve(noteIndex);
+
+            frequencyLabel.setText(String.format("Frequency: %.3f Hz", tunedNote.frequencyHz()));
+            midiLabel.setText("Nearest MIDI Note: " + tunedNote.nearestMidiNote());
+            centsLabel.setText(String.format(
+                    "Cents Deviation: %.3f",
+                    tunedNote.centsDeviationFromNearest12Tet()
+            ));
+            nameLabel.setText("Name: " + tunedNote.displayName());
+
+            midiSoundEngine.playTestNote(noteIndex, noteIndex, tunedNote);
+        });
+
         GridPane debugGrid = new GridPane();
         debugGrid.setHgap(12);
         debugGrid.setVgap(12);
@@ -147,11 +166,12 @@ public final class MainView {
         debugGrid.add(new Label("Note Index"), 0, 0);
         debugGrid.add(noteIndexSpinner, 1, 0);
         debugGrid.add(resolveButton, 2, 0);
+        debugGrid.add(playButton, 3, 0);
 
-        debugGrid.add(frequencyLabel, 0, 1, 3, 1);
-        debugGrid.add(midiLabel, 0, 2, 3, 1);
-        debugGrid.add(centsLabel, 0, 3, 3, 1);
-        debugGrid.add(nameLabel, 0, 4, 3, 1);
+        debugGrid.add(frequencyLabel, 0, 1, 4, 1);
+        debugGrid.add(midiLabel, 0, 2, 4, 1);
+        debugGrid.add(centsLabel, 0, 3, 4, 1);
+        debugGrid.add(nameLabel, 0, 4, 4, 1);
 
         TitledPane debugPane = new TitledPane("Tuning Debug", debugGrid);
         debugPane.setCollapsible(false);
