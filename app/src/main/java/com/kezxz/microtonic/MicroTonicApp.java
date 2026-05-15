@@ -5,6 +5,7 @@ import com.kezxz.microtonic.ui.MainView;
 import javafx.application.Application;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 
 /**
@@ -37,6 +38,8 @@ private MainView mainView;
 
         // The Scene contains the root visual tree and controls the window size.
         Scene scene = new Scene(root, 560, 430);
+        scene.addEventFilter(KeyEvent.KEY_PRESSED, mainView::handleKeyPressed);
+        scene.addEventFilter(KeyEvent.KEY_RELEASED, mainView::handleKeyReleased);
 
         // Load the CSS file from src/main/resources.
         scene.getStylesheets().add(

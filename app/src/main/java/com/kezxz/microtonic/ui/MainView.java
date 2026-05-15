@@ -4,16 +4,29 @@ import com.kezxz.microtonic.app.AppState;
 import com.kezxz.microtonic.tuning.TunedNote;
 import com.kezxz.microtonic.tuning.TuningEngine;
 import com.kezxz.microtonic.sound.midi.MidiSoundEngine;
+import com.kezxz.microtonic.input.KeyboardLayout;
+
 import javafx.geometry.Insets;
+
 import javafx.scene.Parent;
+
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Spinner;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TitledPane;
+import javafx.scene.control.TextInputControl;
+
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
+
+import java.util.HashSet;
+import java.util.OptionalInt;
+import java.util.Set;
 
 /**
  * Builds the main application screen.
@@ -28,6 +41,7 @@ public final class MainView implements AutoCloseable {
     private final AppState appState;
     private final TuningEngine tuningEngine;
     private final MidiSoundEngine midiSoundEngine;
+    private final Set<KeyCode> activeComputerKeys = new HashSet<>();
 
     /**
      * The view needs access to AppState so controls can read and update settings.
@@ -106,6 +120,68 @@ public final class MainView implements AutoCloseable {
         content.minHeightProperty().bind(scrollPane.viewportBoundsProperty().map(bounds -> bounds.getHeight()));
 
         return scrollPane;
+    }
+
+    /**
+     * Handles computer keyboard note-on events.
+     */
+    public void handleKeyPressed(KeyEvent event) {
+        if (shouldIgnoreKeyEvent(event)) {
+            return;
+        }
+
+        KeyCode keyCode = event.getCode();
+
+        if (activeComputerKeys.contains(keyCode)) {
+            return;
+        }
+
+        OptionalInt noteIndex = KeyboardLayout.noteIndexFor(keyCode);
+
+        if (noteIndex.isEmpty()) {
+            return;
+        }
+
+        activeComputerKeys.add(keyCode);
+
+        TunedNote tunedNote = tuningEngine.resolve(noteIndex.getAsInt());
+
+        midiSoundEngine.noteOn(
+                keyCode.getCode(),
+                noteIndex.getAsInt(),
+                tunedNote,
+                100
+        );
+
+        event.consume();
+    }
+
+    /**
+     * Handles computer keyboard note-off events.
+     *
+     * The same key code used for note-on is used as the input note ID for note-off.
+     */
+    public void handleKeyReleased(KeyEvent event) {
+        KeyCode keyCode = event.getCode();
+        OptionalInt noteIndex = KeyboardLayout.noteIndexFor(keyCode);
+
+        if (noteIndex.isEmpty()) {
+            return;
+        }
+
+        activeComputerKeys.remove(keyCode);
+        midiSoundEngine.noteOff(keyCode.getCode());
+
+        event.consume();
+    }
+
+    /**
+     * Avoids playing notes while the user is typing into editable controls.
+     *
+     * This matters because the N-TET spinner has a text editor.
+     */
+    private boolean shouldIgnoreKeyEvent(KeyEvent event) {
+        return event.getTarget() instanceof TextInputControl;
     }
 
     /**
@@ -270,6 +346,7 @@ public final class MainView implements AutoCloseable {
 
     @Override
     public void close() {
+        activeComputerKeys.clear();
         midiSoundEngine.close();
     }
 }
