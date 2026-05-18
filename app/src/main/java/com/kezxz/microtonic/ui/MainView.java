@@ -4,6 +4,7 @@ import com.kezxz.microtonic.app.AppState;
 import com.kezxz.microtonic.tuning.TunedNote;
 import com.kezxz.microtonic.tuning.TuningEngine;
 import com.kezxz.microtonic.sound.midi.MidiSoundEngine;
+import com.kezxz.microtonic.sound.GeneralMidiInstruments;
 import com.kezxz.microtonic.input.KeyboardLayout;
 
 import javafx.geometry.Insets;
@@ -50,6 +51,11 @@ public final class MainView implements AutoCloseable {
         this.appState = appState;
         this.tuningEngine = new TuningEngine(appState);
         this.midiSoundEngine = new MidiSoundEngine();
+        this.appState.instrumentProperty().addListener((observable, oldValue, newValue) ->
+                midiSoundEngine.setInstrumentByName(newValue)
+        );
+
+        this.midiSoundEngine.setInstrumentByName(appState.getInstrument());
     }
 
     /**
@@ -314,13 +320,10 @@ public final class MainView implements AutoCloseable {
      */
     private ComboBox<String> createInstrumentBox() {
         ComboBox<String> box = new ComboBox<>();
-        box.getItems().addAll(
-                "Acoustic Grand Piano",
-                "Vibraphone",
-                "Violin",
-                "Alto Sax"
-        );
+        box.getItems().addAll(GeneralMidiInstruments.displayNames());
+
         box.valueProperty().bindBidirectional(appState.instrumentProperty());
+        
         return box;
     }
 

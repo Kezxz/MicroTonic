@@ -1,5 +1,7 @@
 package com.kezxz.microtonic.app;
 
+import com.kezxz.microtonic.sound.GeneralMidiInstruments;
+
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -15,10 +17,12 @@ import javafx.beans.property.StringProperty;
  */
 public final class AppState {
 
-    private final StringProperty tuningSystem = new SimpleStringProperty("12-TET");                // currently seleceted tuning system
-    private final StringProperty tonic = new SimpleStringProperty("C");                           // currently selected tonic
-    private final IntegerProperty nTetDivisions = new SimpleIntegerProperty(12);                 // number of divisions for N-TET tuning
-    private final StringProperty instrument = new SimpleStringProperty("Acoustic Grand Piano"); // currently selected instrument
+    private final StringProperty tuningSystem = new SimpleStringProperty("12-TET");                  // currently seleceted tuning system
+    private final StringProperty tonic = new SimpleStringProperty("C");                             // currently selected tonic
+    private final IntegerProperty nTetDivisions = new SimpleIntegerProperty(12);                   // number of divisions for N-TET tuning
+    private final StringProperty instrument = new SimpleStringProperty(
+            GeneralMidiInstruments.defaultInstrument().displayName()                                          // currently selected instrument
+    );
     private final StringProperty inputMode = new SimpleStringProperty("Computer Keyboard");    // currently selected input mode
     private final StringProperty waveform = new SimpleStringProperty("Sine");                 // currently selected waveform
 

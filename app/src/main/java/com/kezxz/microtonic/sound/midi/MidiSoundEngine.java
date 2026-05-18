@@ -1,11 +1,13 @@
 package com.kezxz.microtonic.sound.midi;
 
 import com.kezxz.microtonic.tuning.TunedNote;
+import com.kezxz.microtonic.sound.GeneralMidiInstruments;
 
 import javax.sound.midi.MidiChannel;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Synthesizer;
+
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -37,6 +39,8 @@ public final class MidiSoundEngine implements AutoCloseable {
 
     private Synthesizer synthesizer;
     private MidiChannel[] channels;
+    private int currentInstrumentProgram = DEFAULT_INSTRUMENT_PROGRAM;
+
     private boolean started;
 
     /**
@@ -56,7 +60,7 @@ public final class MidiSoundEngine implements AutoCloseable {
                 throw new IllegalStateException("No MIDI channels available from synthesizer.");
             }
 
-            setInstrumentProgram(DEFAULT_INSTRUMENT_PROGRAM);
+            setInstrumentProgram(currentInstrumentProgram);
             started = true;
         } catch (MidiUnavailableException exception) {
             throw new IllegalStateException("Unable to open Java MIDI synthesizer.", exception);
@@ -106,7 +110,7 @@ public final class MidiSoundEngine implements AutoCloseable {
                 tunedNote.centsDeviationFromNearest12Tet()
         );
 
-        channel.programChange(DEFAULT_INSTRUMENT_PROGRAM);
+        channel.programChange(currentInstrumentProgram);
         channel.setPitchBend(pitchBend);
         channel.noteOn(voice.midiNote(), voice.velocity());
     }
@@ -140,12 +144,21 @@ public final class MidiSoundEngine implements AutoCloseable {
     }
 
     /**
+     * Sets the current instrument by UI display name.
+     */
+    public void setInstrumentByName(String displayName) {
+        setInstrumentProgram(GeneralMidiInstruments.programForDisplayName(displayName));
+}
+
+    /**
      * Sets the same General MIDI program on all pitched channels. 0 = Acoustic Piano
      */
     public void setInstrumentProgram(int program) {
         if (program < 0 || program > 127) {
             throw new IllegalArgumentException("MIDI program must be between 0 and 127.");
         }
+
+        currentInstrumentProgram = program;
 
         if (channels == null) {
             return;
