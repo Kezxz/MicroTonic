@@ -7,6 +7,7 @@ import com.kezxz.microtonic.sound.midi.MidiSoundEngine;
 import com.kezxz.microtonic.sound.GeneralMidiInstruments;
 import com.kezxz.microtonic.input.KeyboardLayout;
 import com.kezxz.microtonic.input.MidiDeviceService;
+import com.kezxz.microtonic.input.MidiInputProvider;
 
 import javafx.collections.FXCollections;
 
@@ -47,6 +48,7 @@ public final class MainView implements AutoCloseable {
     private final TuningEngine tuningEngine;
     private final MidiSoundEngine midiSoundEngine;
     private final MidiDeviceService midiDeviceService;
+    private final MidiInputProvider midiInputProvider;
     private final Set<KeyCode> activeComputerKeys = new HashSet<>();
 
     /**
@@ -57,6 +59,7 @@ public final class MainView implements AutoCloseable {
         this.tuningEngine = new TuningEngine(appState);
         this.midiSoundEngine = new MidiSoundEngine();
         this.midiDeviceService = new MidiDeviceService();
+        this.midiInputProvider = new MidiInputProvider();
         this.appState.instrumentProperty().addListener((observable, oldValue, newValue) ->
                 midiSoundEngine.setInstrumentByName(newValue)
         );
@@ -136,6 +139,31 @@ public final class MainView implements AutoCloseable {
     }
 
     /**
+     * Handles MIDI note-on events from the connected MIDI controller.
+     *
+     * MIDI note 60 maps to noteIndex 0.
+     * This means the controller's middle C plays the selected tonic.
+     */
+    private void handleMidiNoteOn(int midiNote, int velocity) {
+        int noteIndex = midiNote - MidiInputProvider.REFERENCE_MIDI_NOTE;
+        TunedNote tunedNote = tuningEngine.resolve(noteIndex);
+
+        midiSoundEngine.noteOn(
+                midiNote,
+                noteIndex,
+                tunedNote,
+                velocity
+        );
+    }
+
+    /**
+     * Handles MIDI note-off events from the connected MIDI controller.
+     */
+    private void handleMidiNoteOff(int midiNote) {
+        midiSoundEngine.noteOff(midiNote);
+    }
+
+    /**
      * Handles computer keyboard note-on events.
      */
     public void handleKeyPressed(KeyEvent event) {
@@ -205,6 +233,7 @@ public final class MainView implements AutoCloseable {
         midiDeviceList.setPrefHeight(120);
 
         Button refreshButton = new Button("Refresh MIDI Devices");
+        Button connectButton = new Button("Connect Selected MIDI Device");
 
         Label statusLabel = new Label();
 
@@ -227,6 +256,36 @@ public final class MainView implements AutoCloseable {
 
         refreshButton.setOnAction(event -> refreshDevices.run());
 
+        connectButton.setOnAction(event -> {
+            String selectedDevice = midiDeviceList.getSelectionModel().getSelectedItem();
+
+            if (selectedDevice == null || selectedDevice.equals("No MIDI input devices found.")) {
+                statusLabel.setText("Select a MIDI input device first.");
+                return;
+            }
+
+            try {
+                midiInputProvider.openByDisplayName(
+                        selectedDevice,
+                        new MidiInputProvider.MidiNoteListener() {
+                            @Override
+                            public void noteOn(int midiNote, int velocity) {
+                                handleMidiNoteOn(midiNote, velocity);
+                            }
+
+                            @Override
+                            public void noteOff(int midiNote) {
+                                handleMidiNoteOff(midiNote);
+                            }
+                        }
+                );
+
+                statusLabel.setText("Connected to " + selectedDevice);
+            } catch (RuntimeException exception) {
+                statusLabel.setText("Could not connect: " + exception.getMessage());
+            }
+        });
+
         refreshDevices.run();
 
         GridPane midiGrid = new GridPane();
@@ -235,8 +294,9 @@ public final class MainView implements AutoCloseable {
         midiGrid.setPadding(new Insets(16));
 
         midiGrid.add(refreshButton, 0, 0);
-        midiGrid.add(statusLabel, 1, 0);
-        midiGrid.add(midiDeviceList, 0, 1, 2, 1);
+        midiGrid.add(connectButton, 1, 0);
+        midiGrid.add(statusLabel, 0, 1, 2, 1);
+        midiGrid.add(midiDeviceList, 0, 2, 2, 1);
 
         TitledPane midiDevicesPane = new TitledPane("MIDI Devices", midiGrid);
         midiDevicesPane.setCollapsible(false);
@@ -322,9 +382,6 @@ public final class MainView implements AutoCloseable {
                 "Meantone"
         );
 
-        // Bidirectional binding means:
-        // - changing the dropdown updates appState
-        // - changing appState updates the dropdown
         box.valueProperty().bindBidirectional(appState.tuningSystemProperty());
         return box;
     }
@@ -398,6 +455,7 @@ public final class MainView implements AutoCloseable {
     @Override
     public void close() {
         activeComputerKeys.clear();
+        midiInputProvider.close();
         midiSoundEngine.close();
     }
 }

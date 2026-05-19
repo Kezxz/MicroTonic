@@ -13,9 +13,7 @@ public final class MidiDeviceService {
 
     /**
      * Returns all available MIDI input devices.
-     *
-     * A MIDI input device is a device that can transmit MIDI messages to us.
-     *
+     * 
      * In Java Sound terms:
      * - getMaxTransmitters() != 0 means the device can send MIDI data out to the application.
      * - getMaxTransmitters() == -1 means unlimited transmitters.
