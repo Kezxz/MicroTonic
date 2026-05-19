@@ -6,6 +6,9 @@ import com.kezxz.microtonic.tuning.TuningEngine;
 import com.kezxz.microtonic.sound.midi.MidiSoundEngine;
 import com.kezxz.microtonic.sound.GeneralMidiInstruments;
 import com.kezxz.microtonic.input.KeyboardLayout;
+import com.kezxz.microtonic.input.MidiDeviceService;
+
+import javafx.collections.FXCollections;
 
 import javafx.geometry.Insets;
 
@@ -21,6 +24,7 @@ import javafx.scene.control.Spinner;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.TextInputControl;
+import javafx.scene.control.ListView;
 
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
@@ -42,6 +46,7 @@ public final class MainView implements AutoCloseable {
     private final AppState appState;
     private final TuningEngine tuningEngine;
     private final MidiSoundEngine midiSoundEngine;
+    private final MidiDeviceService midiDeviceService;
     private final Set<KeyCode> activeComputerKeys = new HashSet<>();
 
     /**
@@ -51,6 +56,7 @@ public final class MainView implements AutoCloseable {
         this.appState = appState;
         this.tuningEngine = new TuningEngine(appState);
         this.midiSoundEngine = new MidiSoundEngine();
+        this.midiDeviceService = new MidiDeviceService();
         this.appState.instrumentProperty().addListener((observable, oldValue, newValue) ->
                 midiSoundEngine.setInstrumentByName(newValue)
         );
@@ -107,12 +113,13 @@ public final class MainView implements AutoCloseable {
         controlsPane.setCollapsible(false);
 
         TitledPane debugPane = createTuningDebugPane();
+        TitledPane midiDevicesPane = createMidiDevicesPane();
 
         Label statusLabel = new Label("Tuning engine up and running. Wiring to computer keyboard and/or MIDI input next.");
         statusLabel.getStyleClass().add("status-label");
 
         // VBox stacks the title, subtitle, controls, and status vertically.
-        VBox content = new VBox(16, title, subtitle, controlsPane, debugPane, statusLabel);
+        VBox content = new VBox(16, title, subtitle, controlsPane, debugPane, midiDevicesPane, statusLabel);
         content.setPadding(new Insets(20));
         content.getStyleClass().add("app-root");
 
@@ -191,13 +198,54 @@ public final class MainView implements AutoCloseable {
     }
 
     /**
+     * Creates a temporary MIDI device listing panel.
+     */
+    private TitledPane createMidiDevicesPane() {
+        ListView<String> midiDeviceList = new ListView<>();
+        midiDeviceList.setPrefHeight(120);
+
+        Button refreshButton = new Button("Refresh MIDI Devices");
+
+        Label statusLabel = new Label();
+
+        Runnable refreshDevices = () -> {
+            var devices = midiDeviceService.listInputDevices();
+
+            if (devices.isEmpty()) {
+                midiDeviceList.setItems(FXCollections.observableArrayList("No MIDI input devices found."));
+                statusLabel.setText("Connect a MIDI controller, then click Refresh MIDI Devices.");
+                return;
+            }
+
+            var displayNames = devices.stream()
+                    .map(MidiDeviceService.MidiInputDeviceInfo::displayName)
+                    .toList();
+
+            midiDeviceList.setItems(FXCollections.observableArrayList(displayNames));
+            statusLabel.setText(devices.size() + " MIDI input device(s) found.");
+        };
+
+        refreshButton.setOnAction(event -> refreshDevices.run());
+
+        refreshDevices.run();
+
+        GridPane midiGrid = new GridPane();
+        midiGrid.setHgap(12);
+        midiGrid.setVgap(12);
+        midiGrid.setPadding(new Insets(16));
+
+        midiGrid.add(refreshButton, 0, 0);
+        midiGrid.add(statusLabel, 1, 0);
+        midiGrid.add(midiDeviceList, 0, 1, 2, 1);
+
+        TitledPane midiDevicesPane = new TitledPane("MIDI Devices", midiGrid);
+        midiDevicesPane.setCollapsible(false);
+
+        return midiDevicesPane;
+    }
+
+    /**
      * Creates a small debug panel for manually testing tuning results.
-     *
-     * This is temporary-but-useful MVP tooling:
-     * - choose a note index
-     * - resolve it through the active tuning strategy
-     * - display the resulting frequency and tuning metadata
-     *
      * Later, this same information can move into the real-time feedback panel.
      */
     private TitledPane createTuningDebugPane() {
@@ -323,7 +371,7 @@ public final class MainView implements AutoCloseable {
         box.getItems().addAll(GeneralMidiInstruments.displayNames());
 
         box.valueProperty().bindBidirectional(appState.instrumentProperty());
-        
+
         return box;
     }
 
