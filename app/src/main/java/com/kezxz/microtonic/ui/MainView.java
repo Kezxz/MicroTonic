@@ -117,12 +117,13 @@ public final class MainView implements AutoCloseable {
 
         TitledPane debugPane = createTuningDebugPane();
         TitledPane midiDevicesPane = createMidiDevicesPane();
+        Button panicButton = createPanicButton();
 
         Label statusLabel = new Label("Tuning engine up and running. Wiring to computer keyboard and/or MIDI input next.");
         statusLabel.getStyleClass().add("status-label");
 
         // VBox stacks the title, subtitle, controls, and status vertically.
-        VBox content = new VBox(16, title, subtitle, controlsPane, debugPane, midiDevicesPane, statusLabel);
+        VBox content = new VBox(16, title, subtitle, controlsPane, debugPane, midiDevicesPane, panicButton, statusLabel);
         content.setPadding(new Insets(20));
         content.getStyleClass().add("app-root");
 
@@ -161,6 +162,11 @@ public final class MainView implements AutoCloseable {
      */
     private void handleMidiNoteOff(int midiNote) {
         midiSoundEngine.noteOff(midiNote);
+    }
+
+    private void panicAllNotesOff() {
+        activeComputerKeys.clear();
+        midiSoundEngine.allNotesOff();
     }
 
     /**
@@ -223,6 +229,12 @@ public final class MainView implements AutoCloseable {
      */
     private boolean shouldIgnoreKeyEvent(KeyEvent event) {
         return event.getTarget() instanceof TextInputControl;
+    }
+
+    private Button createPanicButton() {
+        Button panicButton = new Button("Panic / All Notes Off");
+        panicButton.setOnAction(event -> panicAllNotesOff());
+        return panicButton;
     }
 
     /**
@@ -454,7 +466,7 @@ public final class MainView implements AutoCloseable {
 
     @Override
     public void close() {
-        activeComputerKeys.clear();
+        panicAllNotesOff();
         midiInputProvider.close();
         midiSoundEngine.close();
     }
