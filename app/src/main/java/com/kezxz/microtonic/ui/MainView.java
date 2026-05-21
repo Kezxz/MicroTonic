@@ -237,6 +237,11 @@ public final class MainView implements AutoCloseable {
         return panicButton;
     }
 
+    private void disconnectMidiDevice() {
+        panicAllNotesOff();
+        midiInputProvider.close();
+    }
+
     /**
      * Creates a temporary MIDI device listing panel.
      */
@@ -246,6 +251,7 @@ public final class MainView implements AutoCloseable {
 
         Button refreshButton = new Button("Refresh MIDI Devices");
         Button connectButton = new Button("Connect Selected MIDI Device");
+        Button disconnectButton = new Button("Disconnect MIDI Device");
 
         Label statusLabel = new Label();
 
@@ -277,6 +283,9 @@ public final class MainView implements AutoCloseable {
             }
 
             try {
+                panicAllNotesOff();
+                midiInputProvider.close();
+
                 midiInputProvider.openByDisplayName(
                         selectedDevice,
                         new MidiInputProvider.MidiNoteListener() {
@@ -298,6 +307,11 @@ public final class MainView implements AutoCloseable {
             }
         });
 
+        disconnectButton.setOnAction(event -> {
+            disconnectMidiDevice();
+            statusLabel.setText("MIDI device disconnected.");
+        });
+
         refreshDevices.run();
 
         GridPane midiGrid = new GridPane();
@@ -307,8 +321,9 @@ public final class MainView implements AutoCloseable {
 
         midiGrid.add(refreshButton, 0, 0);
         midiGrid.add(connectButton, 1, 0);
-        midiGrid.add(statusLabel, 0, 1, 2, 1);
-        midiGrid.add(midiDeviceList, 0, 2, 2, 1);
+        midiGrid.add(disconnectButton, 2, 0);
+        midiGrid.add(statusLabel, 0, 1, 3, 1);
+        midiGrid.add(midiDeviceList, 0, 2, 3, 1);
 
         TitledPane midiDevicesPane = new TitledPane("MIDI Devices", midiGrid);
         midiDevicesPane.setCollapsible(false);
@@ -466,8 +481,7 @@ public final class MainView implements AutoCloseable {
 
     @Override
     public void close() {
-        panicAllNotesOff();
-        midiInputProvider.close();
+        disconnectMidiDevice();
         midiSoundEngine.close();
     }
 }
