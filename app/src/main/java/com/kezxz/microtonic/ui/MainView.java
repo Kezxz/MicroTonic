@@ -260,7 +260,7 @@ public final class MainView implements AutoCloseable {
 
             if (devices.isEmpty()) {
                 midiDeviceList.setItems(FXCollections.observableArrayList("No MIDI input devices found."));
-                statusLabel.setText("Connect a MIDI controller, then click Refresh MIDI Devices.");
+                statusLabel.setText("No user-facing MIDI controllers found. Connect one, then click Refresh MIDI Devices.");
                 return;
             }
 

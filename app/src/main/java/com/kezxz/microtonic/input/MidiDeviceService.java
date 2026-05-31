@@ -22,7 +22,7 @@ public final class MidiDeviceService {
         List<MidiInputDeviceInfo> devices = new ArrayList<>();
 
         for (MidiDevice.Info info : MidiSystem.getMidiDeviceInfo()) {
-            if (isInputDevice(info)) {
+            if (isInputDevice(info) && isUserFacingInputDevice(info)) {
                 devices.add(MidiInputDeviceInfo.from(info));
             }
         }
@@ -42,6 +42,33 @@ public final class MidiDeviceService {
         } catch (Exception exception) {
             return false;
         }
+    }
+
+    /**
+     * internal/Java MIDI devices
+     */
+
+    private boolean isUserFacingInputDevice(MidiDevice.Info info) {
+        String name = clean(info.getName()).toLowerCase();
+        String description = clean(info.getDescription()).toLowerCase();
+
+        if (name.contains("real time sequencer")) {
+            return false;
+        }
+
+        if (name.contains("java sound synthesizer")) {
+            return false;
+        }
+
+        if (description.contains("software sequencer")) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private String clean(String value) {
+        return value == null ? "" : value.trim();
     }
 
     /**
