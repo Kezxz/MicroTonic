@@ -63,7 +63,9 @@ public final class MainView implements AutoCloseable {
         this.appState.instrumentProperty().addListener((observable, oldValue, newValue) ->
                 midiSoundEngine.setInstrumentByName(newValue)
         );
-
+        this.appState.inputModeProperty().addListener((observable, oldValue, newValue) ->
+                panicAllNotesOff()
+        );
         this.midiSoundEngine.setInstrumentByName(appState.getInstrument());
     }
 
@@ -146,6 +148,10 @@ public final class MainView implements AutoCloseable {
      * This means the controller's middle C plays the selected tonic.
      */
     private void handleMidiNoteOn(int midiNote, int velocity) {
+        if (!isMidiInputEnabled()) {
+            return;
+        }
+        
         int noteIndex = midiNote - MidiInputProvider.REFERENCE_MIDI_NOTE;
         TunedNote tunedNote = tuningEngine.resolve(noteIndex);
 
@@ -161,6 +167,10 @@ public final class MainView implements AutoCloseable {
      * Handles MIDI note-off events from the connected MIDI controller.
      */
     private void handleMidiNoteOff(int midiNote) {
+        if (!isMidiInputEnabled()) {
+            return;
+        }
+
         midiSoundEngine.noteOff(midiNote);
     }
 
@@ -173,6 +183,10 @@ public final class MainView implements AutoCloseable {
      * Handles computer keyboard note-on events.
      */
     public void handleKeyPressed(KeyEvent event) {
+        if (!isComputerKeyboardInputEnabled()) {
+            return;
+        }
+
         if (shouldIgnoreKeyEvent(event)) {
             return;
         }
@@ -209,6 +223,10 @@ public final class MainView implements AutoCloseable {
      * The same key code used for note-on is used as the input note ID for note-off.
      */
     public void handleKeyReleased(KeyEvent event) {
+        if (!isComputerKeyboardInputEnabled()) {
+            return;
+        }
+
         KeyCode keyCode = event.getCode();
         OptionalInt noteIndex = KeyboardLayout.noteIndexFor(keyCode);
 
@@ -229,6 +247,14 @@ public final class MainView implements AutoCloseable {
      */
     private boolean shouldIgnoreKeyEvent(KeyEvent event) {
         return event.getTarget() instanceof TextInputControl;
+    }
+
+    private boolean isComputerKeyboardInputEnabled() {
+        return "Computer Keyboard".equals(appState.getInputMode());
+    }
+
+    private boolean isMidiInputEnabled() {
+        return "MIDI".equals(appState.getInputMode());
     }
 
     private Button createPanicButton() {
