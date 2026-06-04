@@ -3,6 +3,7 @@ package com.kezxz.microtonic.ui;
 import com.kezxz.microtonic.app.AppState;
 import com.kezxz.microtonic.tuning.TunedNote;
 import com.kezxz.microtonic.tuning.TuningEngine;
+import com.kezxz.microtonic.tuning.TuningSystem;
 import com.kezxz.microtonic.sound.midi.MidiSoundEngine;
 import com.kezxz.microtonic.sound.GeneralMidiInstruments;
 import com.kezxz.microtonic.input.KeyboardLayout;
@@ -51,9 +52,6 @@ public final class MainView implements AutoCloseable {
     private final MidiInputProvider midiInputProvider;
     private final Set<KeyCode> activeComputerKeys = new HashSet<>();
 
-    /**
-     * The view needs access to AppState so controls can read and update settings.
-     */
     public MainView(AppState appState) {
         this.appState = appState;
         this.tuningEngine = new TuningEngine(appState);
@@ -71,8 +69,6 @@ public final class MainView implements AutoCloseable {
 
     /**
      * Builds and returns the full JavaFX visual tree for the main screen.
-     *
-     * Parent is the common base type for JavaFX nodes that can be used as the root of a Scene.
      */
     public Parent build() {
         Label title = new Label("MicroTonic");
@@ -242,8 +238,6 @@ public final class MainView implements AutoCloseable {
 
     /**
      * Avoids playing notes while the user is typing into editable controls.
-     *
-     * This matters because the N-TET spinner has a text editor.
      */
     private boolean shouldIgnoreKeyEvent(KeyEvent event) {
         return event.getTarget() instanceof TextInputControl;
@@ -427,13 +421,7 @@ public final class MainView implements AutoCloseable {
      */
     private ComboBox<String> createTuningSystemBox() {
         ComboBox<String> box = new ComboBox<>();
-        box.getItems().addAll(
-                "12-TET",
-                "N-TET",
-                "Just Intonation - 12-tone chromatic",
-                "Pythagorean",
-                "Meantone"
-        );
+        box.getItems().addAll(TuningSystem.displayNames());
 
         box.valueProperty().bindBidirectional(appState.tuningSystemProperty());
         return box;

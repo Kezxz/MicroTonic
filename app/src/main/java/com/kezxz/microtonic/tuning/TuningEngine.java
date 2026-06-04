@@ -30,10 +30,6 @@ public final class TuningEngine {
     private final PythagoreanStrategy pythagoreanStrategy = new PythagoreanStrategy();
     private final MeantoneStrategy meantoneStrategy = new MeantoneStrategy();
 
-    /**
-     * The engine reads from AppState so changes in the UI can affect future
-     * resolved notes.
-     */
     public TuningEngine(AppState appState) {
         this.appState = appState;
     }
@@ -80,12 +76,14 @@ public final class TuningEngine {
      * Chooses a tuning strategy from the current tuning-system dropdown value.
      */
     private TuningStrategy selectStrategy() {
-        return switch (appState.getTuningSystem()) {
-            case "12-TET" -> twelveTETStrategy;
-            case "N-TET" -> nTetStrategy;
-            case "Just Intonation - 12-tone chromatic" -> justIntonationStrategy;
-            case "Pythagorean" -> pythagoreanStrategy;
-            case "Meantone" -> meantoneStrategy;
+        TuningSystem tuningSystem = TuningSystem.fromDisplayName(appState.getTuningSystem());
+
+        return switch (tuningSystem) {
+            case TWELVE_TET -> twelveTETStrategy;
+            case N_TET -> nTetStrategy;
+            case JUST_INTONATION_CHROMATIC -> justIntonationStrategy;
+            case PYTHAGOREAN -> pythagoreanStrategy;
+            case MEANTONE -> meantoneStrategy;
             default -> twelveTETStrategy;
         };
     }
