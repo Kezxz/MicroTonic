@@ -31,18 +31,12 @@ import javafx.scene.control.ListView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 
+import javafx.application.Platform;
+
 import java.util.HashSet;
 import java.util.OptionalInt;
 import java.util.Set;
 
-/**
- * Builds the main application screen.
- * 
- * This class owns the UI layout, but not the app's core logic
- *
- * For now, this is a simple JavaFX view bound directly to AppState.
- * Later, if the app grows, this can evolve into a fuller ViewModel pattern.
- */
 public final class MainView implements AutoCloseable {
 
     private final AppState appState;
@@ -51,6 +45,13 @@ public final class MainView implements AutoCloseable {
     private final MidiDeviceService midiDeviceService;
     private final MidiInputProvider midiInputProvider;
     private final Set<KeyCode> activeComputerKeys = new HashSet<>();
+
+    private final Label liveSourceLabel = new Label("Source: —");
+    private final Label liveNoteIndexLabel = new Label("Note Index: —");
+    private final Label liveFrequencyLabel = new Label("Frequency: —");
+    private final Label liveMidiLabel = new Label("Nearest MIDI Note: —");
+    private final Label liveCentsLabel = new Label("Cents deviation: —");
+    private final Label liveNameLabel = new Label("Name: —");
 
     public MainView(AppState appState) {
         this.appState = appState;
@@ -67,9 +68,6 @@ public final class MainView implements AutoCloseable {
         this.midiSoundEngine.setInstrumentByName(appState.getInstrument());
     }
 
-    /**
-     * Builds and returns the full JavaFX visual tree for the main screen.
-     */
     public Parent build() {
         Label title = new Label("MicroTonic");
         title.getStyleClass().add("app-title");
@@ -114,6 +112,7 @@ public final class MainView implements AutoCloseable {
         controlsPane.setCollapsible(false);
 
         TitledPane debugPane = createTuningDebugPane();
+        TitledPane liveFeedbackPane = createLiveFeedbackPane();
         TitledPane midiDevicesPane = createMidiDevicesPane();
         Button panicButton = createPanicButton();
 
@@ -121,7 +120,7 @@ public final class MainView implements AutoCloseable {
         statusLabel.getStyleClass().add("status-label");
 
         // VBox stacks the title, subtitle, controls, and status vertically.
-        VBox content = new VBox(16, title, subtitle, controlsPane, debugPane, midiDevicesPane, panicButton, statusLabel);
+        VBox content = new VBox(16, title, subtitle, controlsPane, debugPane, liveFeedbackPane, midiDevicesPane, panicButton, statusLabel);
         content.setPadding(new Insets(20));
         content.getStyleClass().add("app-root");
 
@@ -137,12 +136,9 @@ public final class MainView implements AutoCloseable {
         return scrollPane;
     }
 
-    /**
-     * Handles MIDI note-on events from the connected MIDI controller.
-     *
-     * MIDI note 60 maps to noteIndex 0.
-     * This means the controller's middle C plays the selected tonic.
-     */
+// ----------- KEYBOARD/MIDI HANDLER METHODS ----------- //
+
+    // MIDI note 60 maps to noteIndex 0. this means the controller's middle C plays the selected tonic
     private void handleMidiNoteOn(int midiNote, int velocity) {
         if (!isMidiInputEnabled()) {
             return;
@@ -157,11 +153,10 @@ public final class MainView implements AutoCloseable {
                 tunedNote,
                 velocity
         );
+
+        updateLiveFeedback("MIDI", noteIndex, tunedNote);
     }
 
-    /**
-     * Handles MIDI note-off events from the connected MIDI controller.
-     */
     private void handleMidiNoteOff(int midiNote) {
         if (!isMidiInputEnabled()) {
             return;
@@ -175,9 +170,6 @@ public final class MainView implements AutoCloseable {
         midiSoundEngine.allNotesOff();
     }
 
-    /**
-     * Handles computer keyboard note-on events.
-     */
     public void handleKeyPressed(KeyEvent event) {
         if (!isComputerKeyboardInputEnabled()) {
             return;
@@ -210,14 +202,11 @@ public final class MainView implements AutoCloseable {
                 100
         );
 
+        updateLiveFeedback("Computer Keyboard", noteIndex.getAsInt(), tunedNote);
+
         event.consume();
     }
 
-    /**
-     * Handles computer keyboard note-off events.
-     *
-     * The same key code used for note-on is used as the input note ID for note-off.
-     */
     public void handleKeyReleased(KeyEvent event) {
         if (!isComputerKeyboardInputEnabled()) {
             return;
@@ -236,9 +225,7 @@ public final class MainView implements AutoCloseable {
         event.consume();
     }
 
-    /**
-     * Avoids playing notes while the user is typing into editable controls.
-     */
+    // avoids playing notes while the user is typing into editable controls
     private boolean shouldIgnoreKeyEvent(KeyEvent event) {
         return event.getTarget() instanceof TextInputControl;
     }
@@ -262,9 +249,28 @@ public final class MainView implements AutoCloseable {
         midiInputProvider.close();
     }
 
-    /**
-     * Creates a temporary MIDI device listing panel.
-     */
+    private void updateLiveFeedback(String source, int noteIndex, TunedNote tunedNote) {
+        Runnable update = () -> {
+            liveSourceLabel.setText("Source: " + source);
+            liveNoteIndexLabel.setText("Note Index: " + noteIndex);
+            liveFrequencyLabel.setText(String.format("Frequency: %.3f Hz", tunedNote.frequencyHz()));
+            liveMidiLabel.setText("Nearest MIDI Note: " + tunedNote.nearestMidiNote());
+            liveCentsLabel.setText(String.format(
+                        "Cents Deviation: %.3f",
+                        tunedNote.centsDeviationFromNearest12Tet()
+            ));
+            liveNameLabel.setText("Name: " + tunedNote.displayName());
+        };
+
+        if (Platform.isFxApplicationThread()) {
+            update.run();
+        } else {
+            Platform.runLater(update);
+        }
+    }
+
+// ----------- DISPLAY MIDI DEVICES ----------- //
+
     private TitledPane createMidiDevicesPane() {
         ListView<String> midiDeviceList = new ListView<>();
         midiDeviceList.setPrefHeight(120);
@@ -351,10 +357,29 @@ public final class MainView implements AutoCloseable {
         return midiDevicesPane;
     }
 
-    /**
-     * Creates a small debug panel for manually testing tuning results.
-     * Later, this same information can move into the real-time feedback panel.
-     */
+// ----------- LIVE FEEDBACK PANE ----------- //
+
+    private TitledPane createLiveFeedbackPane() {
+        GridPane feedbackGrid = new GridPane();
+        feedbackGrid.setHgap(12);
+        feedbackGrid.setVgap(8);
+        feedbackGrid.setPadding(new Insets(16));
+
+        feedbackGrid.add(liveSourceLabel, 0, 0);
+        feedbackGrid.add(liveNoteIndexLabel,0, 1);
+        feedbackGrid.add(liveFrequencyLabel, 0, 2);
+        feedbackGrid.add(liveMidiLabel, 0, 3);
+        feedbackGrid.add(liveCentsLabel, 0, 4);
+        feedbackGrid.add(liveNameLabel, 0, 5);
+
+        TitledPane feedbackPane = new TitledPane("Live Note Feedback", feedbackGrid);
+        feedbackPane.setCollapsible(false);
+
+        return feedbackPane;
+    }
+
+// ----------- DEBUG PANEL ----------- //
+
     private TitledPane createTuningDebugPane() {
         Spinner<Integer> noteIndexSpinner = new Spinner<>(-48, 48, 0);
         noteIndexSpinner.setEditable(true);
@@ -393,6 +418,7 @@ public final class MainView implements AutoCloseable {
             nameLabel.setText("Name: " + tunedNote.displayName());
 
             midiSoundEngine.playTestNote(noteIndex, noteIndex, tunedNote);
+            updateLiveFeedback("Debug Test Note", noteIndex, tunedNote);
         });
 
         GridPane debugGrid = new GridPane();
@@ -416,9 +442,8 @@ public final class MainView implements AutoCloseable {
         return debugPane;
     }
 
-    /**
-     * Creates the tuning-system dropdown and binds it to AppState.
-     */
+// ----------- UI DROPDOWN BOXES ----------- //
+
     private ComboBox<String> createTuningSystemBox() {
         ComboBox<String> box = new ComboBox<>();
         box.getItems().addAll(TuningSystem.displayNames());
@@ -427,9 +452,6 @@ public final class MainView implements AutoCloseable {
         return box;
     }
 
-    /**
-     * Creates the tonic/root-note dropdown.
-     */
     private ComboBox<String> createTonicBox() {
         ComboBox<String> box = new ComboBox<>();
         box.getItems().addAll(
@@ -440,18 +462,7 @@ public final class MainView implements AutoCloseable {
         return box;
     }
 
-    /**
-     * Creates the N-TET division spinner.
-     *
-     * MVP range:
-     * - minimum 2 divisions per octave
-     * - maximum 72 divisions per octave
-     *
-     * Examples:
-     * - 12 = normal 12-TET
-     * - 17 = 17-TET
-     * - 24 = quarter-tone equal temperament
-     */
+    // N-TET divisions....min = 2, max = 72
     private Spinner<Integer> createDivisionsSpinner() {
         Spinner<Integer> spinner = new Spinner<>(2, 72, appState.getNTetDivisions());
         spinner.setEditable(true);
@@ -461,9 +472,6 @@ public final class MainView implements AutoCloseable {
         return spinner;
     }
 
-    /**
-     * Creates the General MIDI instrument dropdown.
-     */
     private ComboBox<String> createInstrumentBox() {
         ComboBox<String> box = new ComboBox<>();
         box.getItems().addAll(GeneralMidiInstruments.displayNames());
@@ -473,9 +481,6 @@ public final class MainView implements AutoCloseable {
         return box;
     }
 
-    /**
-     * Creates the input mode dropdown.
-     */
     private ComboBox<String> createInputModeBox() {
         ComboBox<String> box = new ComboBox<>();
         box.getItems().addAll("MIDI", "Computer Keyboard");
@@ -483,9 +488,6 @@ public final class MainView implements AutoCloseable {
         return box;
     }
 
-    /**
-     * Creates the waveform dropdown for the future synth engine.
-     */
     private ComboBox<String> createWaveformBox() {
         ComboBox<String> box = new ComboBox<>();
         box.getItems().addAll("Sine", "Square", "Saw", "Triangle");
