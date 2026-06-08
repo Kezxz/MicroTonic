@@ -1,24 +1,23 @@
 package com.kezxz.microtonic.ui;
 
 import com.kezxz.microtonic.app.AppState;
+import com.kezxz.microtonic.input.KeyboardLayout;
+import com.kezxz.microtonic.input.MidiDeviceService;
+import com.kezxz.microtonic.input.MidiInputProvider;
 import com.kezxz.microtonic.tuning.TunedNote;
 import com.kezxz.microtonic.tuning.TuningEngine;
 import com.kezxz.microtonic.tuning.TuningSystem;
 import com.kezxz.microtonic.sound.midi.MidiSoundEngine;
 import com.kezxz.microtonic.sound.GeneralMidiInstruments;
-import com.kezxz.microtonic.input.KeyboardLayout;
-import com.kezxz.microtonic.input.MidiDeviceService;
-import com.kezxz.microtonic.input.MidiInputProvider;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
-
 import javafx.geometry.Insets;
-
 import javafx.scene.Parent;
-
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -27,11 +26,6 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.control.ListView;
-
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.VBox;
-
-import javafx.application.Platform;
 
 import java.util.HashSet;
 import java.util.OptionalInt;
@@ -50,7 +44,7 @@ public final class MainView implements AutoCloseable {
     private final Label liveNoteIndexLabel = new Label("Note Index: —");
     private final Label liveFrequencyLabel = new Label("Frequency: —");
     private final Label liveMidiLabel = new Label("Nearest MIDI Note: —");
-    private final Label liveCentsLabel = new Label("Cents deviation: —");
+    private final Label liveCentsLabel = new Label("Cents Deviation: —");
     private final Label liveNameLabel = new Label("Name: —");
 
     public MainView(AppState appState) {
@@ -68,6 +62,8 @@ public final class MainView implements AutoCloseable {
         this.midiSoundEngine.setInstrumentByName(appState.getInstrument());
     }
 
+// ----------- ROOT VIEW ----------- //
+
     public Parent build() {
         Label title = new Label("MicroTonic");
         title.getStyleClass().add("app-title");
@@ -75,7 +71,6 @@ public final class MainView implements AutoCloseable {
         Label subtitle = new Label("Microtonal tuning sketchpad");
         subtitle.getStyleClass().add("app-subtitle");
 
-        // Create each control through a helper method so this build method stays readable.
         ComboBox<String> tuningSystemBox = createTuningSystemBox();
         ComboBox<String> tonicBox = createTonicBox();
         Spinner<Integer> divisionsSpinner = createDivisionsSpinner();
@@ -83,7 +78,6 @@ public final class MainView implements AutoCloseable {
         ComboBox<String> inputModeBox = createInputModeBox();
         ComboBox<String> waveformBox = createWaveformBox();
 
-        // GridPane is useful for simple label/control form layouts. Maybe upgrade to something more complex later.
         GridPane controlsGrid = new GridPane();
         controlsGrid.setHgap(12);
         controlsGrid.setVgap(12);
@@ -107,20 +101,20 @@ public final class MainView implements AutoCloseable {
         controlsGrid.add(new Label("Waveform"), 0, 5);
         controlsGrid.add(waveformBox, 1, 5);
 
-        // TitledPane gives the control group a simple labeled container.
-        TitledPane controlsPane = new TitledPane("Controls", controlsGrid);
+        // groups main controls in a titled section
+        TitledPane controlsPane = new TitledPane("Main Controls", controlsGrid);
         controlsPane.setCollapsible(false);
 
         TitledPane debugPane = createTuningDebugPane();
         TitledPane liveFeedbackPane = createLiveFeedbackPane();
         TitledPane midiDevicesPane = createMidiDevicesPane();
-        Button panicButton = createPanicButton();
+        TitledPane utilityPane = createUtilityPane();
 
-        Label statusLabel = new Label("Tuning engine up and running. Wiring to computer keyboard and/or MIDI input next.");
+        Label statusLabel = new Label("Try out some different intonations. Play notes to see the live feedback!");
         statusLabel.getStyleClass().add("status-label");
 
-        // VBox stacks the title, subtitle, controls, and status vertically.
-        VBox content = new VBox(16, title, subtitle, controlsPane, debugPane, liveFeedbackPane, midiDevicesPane, panicButton, statusLabel);
+        // builds the vertical layout of the app
+        VBox content = new VBox(16, title, subtitle, controlsPane, liveFeedbackPane, midiDevicesPane, utilityPane, debugPane, statusLabel);
         content.setPadding(new Insets(20));
         content.getStyleClass().add("app-root");
 
@@ -130,123 +124,84 @@ public final class MainView implements AutoCloseable {
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
 
-        // make the VBox at least as tall as the visible ScrollPane area
+        // makes the VBox at least as tall as the visible ScrollPane area
         content.minHeightProperty().bind(scrollPane.viewportBoundsProperty().map(bounds -> bounds.getHeight()));
 
         return scrollPane;
     }
 
-// ----------- KEYBOARD/MIDI HANDLER METHODS ----------- //
+// ----------- MAIN CONTROLS PANE ----------- //
 
-    // MIDI note 60 maps to noteIndex 0. this means the controller's middle C plays the selected tonic
-    private void handleMidiNoteOn(int midiNote, int velocity) {
-        if (!isMidiInputEnabled()) {
-            return;
-        }
-        
-        int noteIndex = midiNote - MidiInputProvider.REFERENCE_MIDI_NOTE;
-        TunedNote tunedNote = tuningEngine.resolve(noteIndex);
+    private ComboBox<String> createTuningSystemBox() {
+        ComboBox<String> box = new ComboBox<>();
+        box.getItems().addAll(TuningSystem.displayNames());
 
-        midiSoundEngine.noteOn(
-                midiNote,
-                noteIndex,
-                tunedNote,
-                velocity
+        box.valueProperty().bindBidirectional(appState.tuningSystemProperty());
+        return box;
+    }
+
+    private ComboBox<String> createTonicBox() {
+        ComboBox<String> box = new ComboBox<>();
+        box.getItems().addAll(
+                "C", "C#/Db", "D", "D#/Eb", "E", "F",
+                "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B"
         );
-
-        updateLiveFeedback("MIDI", noteIndex, tunedNote);
+        box.valueProperty().bindBidirectional(appState.tonicProperty());
+        return box;
     }
 
-    private void handleMidiNoteOff(int midiNote) {
-        if (!isMidiInputEnabled()) {
-            return;
-        }
+    // N-TET divisions....min = 2, max = 72
+    private Spinner<Integer> createDivisionsSpinner() {
+        Spinner<Integer> spinner = new Spinner<>(2, 72, appState.getNTetDivisions());
+        spinner.setEditable(true);
 
-        midiSoundEngine.noteOff(midiNote);
+        appState.nTetDivisionsProperty().bind(spinner.valueProperty());
+
+        return spinner;
     }
 
-    private void panicAllNotesOff() {
-        activeComputerKeys.clear();
-        midiSoundEngine.allNotesOff();
+    private ComboBox<String> createInstrumentBox() {
+        ComboBox<String> box = new ComboBox<>();
+        box.getItems().addAll(GeneralMidiInstruments.displayNames());
+
+        box.valueProperty().bindBidirectional(appState.instrumentProperty());
+
+        return box;
     }
 
-    public void handleKeyPressed(KeyEvent event) {
-        if (!isComputerKeyboardInputEnabled()) {
-            return;
-        }
-
-        if (shouldIgnoreKeyEvent(event)) {
-            return;
-        }
-
-        KeyCode keyCode = event.getCode();
-
-        if (activeComputerKeys.contains(keyCode)) {
-            return;
-        }
-
-        OptionalInt noteIndex = KeyboardLayout.noteIndexFor(keyCode);
-
-        if (noteIndex.isEmpty()) {
-            return;
-        }
-
-        activeComputerKeys.add(keyCode);
-
-        TunedNote tunedNote = tuningEngine.resolve(noteIndex.getAsInt());
-
-        midiSoundEngine.noteOn(
-                keyCode.getCode(),
-                noteIndex.getAsInt(),
-                tunedNote,
-                100
-        );
-
-        updateLiveFeedback("Computer Keyboard", noteIndex.getAsInt(), tunedNote);
-
-        event.consume();
+    private ComboBox<String> createInputModeBox() {
+        ComboBox<String> box = new ComboBox<>();
+        box.getItems().addAll("MIDI", "Computer Keyboard");
+        box.valueProperty().bindBidirectional(appState.inputModeProperty());
+        return box;
     }
 
-    public void handleKeyReleased(KeyEvent event) {
-        if (!isComputerKeyboardInputEnabled()) {
-            return;
-        }
-
-        KeyCode keyCode = event.getCode();
-        OptionalInt noteIndex = KeyboardLayout.noteIndexFor(keyCode);
-
-        if (noteIndex.isEmpty()) {
-            return;
-        }
-
-        activeComputerKeys.remove(keyCode);
-        midiSoundEngine.noteOff(keyCode.getCode());
-
-        event.consume();
+    private ComboBox<String> createWaveformBox() {
+        ComboBox<String> box = new ComboBox<>();
+        box.getItems().addAll("Sine", "Square", "Saw", "Triangle");
+        box.valueProperty().bindBidirectional(appState.waveformProperty());
+        return box;
     }
 
-    // avoids playing notes while the user is typing into editable controls
-    private boolean shouldIgnoreKeyEvent(KeyEvent event) {
-        return event.getTarget() instanceof TextInputControl;
-    }
+// ----------- CURRENT NOTE / LIVE FEEDBACK UPDATE ----------- //
 
-    private boolean isComputerKeyboardInputEnabled() {
-        return "Computer Keyboard".equals(appState.getInputMode());
-    }
+    private TitledPane createLiveFeedbackPane() {
+        GridPane feedbackGrid = new GridPane();
+        feedbackGrid.setHgap(12);
+        feedbackGrid.setVgap(8);
+        feedbackGrid.setPadding(new Insets(16));
 
-    private boolean isMidiInputEnabled() {
-        return "MIDI".equals(appState.getInputMode());
-    }
+        feedbackGrid.add(liveSourceLabel, 0, 0);
+        feedbackGrid.add(liveNoteIndexLabel,0, 1);
+        feedbackGrid.add(liveFrequencyLabel, 0, 2);
+        feedbackGrid.add(liveMidiLabel, 0, 3);
+        feedbackGrid.add(liveCentsLabel, 0, 4);
+        feedbackGrid.add(liveNameLabel, 0, 5);
 
-    private Button createPanicButton() {
-        Button panicButton = new Button("Panic / All Notes Off");
-        panicButton.setOnAction(event -> panicAllNotesOff());
-        return panicButton;
-    }
+        TitledPane feedbackPane = new TitledPane("Current Note", feedbackGrid);
+        feedbackPane.setCollapsible(false);
 
-    private void disconnectMidiDevice() {
-        panicAllNotesOff();
-        midiInputProvider.close();
+        return feedbackPane;
     }
 
     private void updateLiveFeedback(String source, int noteIndex, TunedNote tunedNote) {
@@ -269,7 +224,7 @@ public final class MainView implements AutoCloseable {
         }
     }
 
-// ----------- DISPLAY MIDI DEVICES ----------- //
+// ----------- MIDI SETUP PANE ----------- //
 
     private TitledPane createMidiDevicesPane() {
         ListView<String> midiDeviceList = new ListView<>();
@@ -279,7 +234,7 @@ public final class MainView implements AutoCloseable {
         Button connectButton = new Button("Connect Selected MIDI Device");
         Button disconnectButton = new Button("Disconnect MIDI Device");
 
-        Label statusLabel = new Label();
+        Label statusLabel = new Label("Ready. Select a tuning, choose an input source, and play.");
 
         Runnable refreshDevices = () -> {
             var devices = midiDeviceService.listInputDevices();
@@ -351,34 +306,41 @@ public final class MainView implements AutoCloseable {
         midiGrid.add(statusLabel, 0, 1, 3, 1);
         midiGrid.add(midiDeviceList, 0, 2, 3, 1);
 
-        TitledPane midiDevicesPane = new TitledPane("MIDI Devices", midiGrid);
+        TitledPane midiDevicesPane = new TitledPane("MIDI Setup", midiGrid);
         midiDevicesPane.setCollapsible(false);
 
         return midiDevicesPane;
     }
 
-// ----------- LIVE FEEDBACK PANE ----------- //
+// ----------- UTILITY PANE ---------- //
 
-    private TitledPane createLiveFeedbackPane() {
-        GridPane feedbackGrid = new GridPane();
-        feedbackGrid.setHgap(12);
-        feedbackGrid.setVgap(8);
-        feedbackGrid.setPadding(new Insets(16));
+    private TitledPane createUtilityPane() {
+        GridPane utilityGrid = new GridPane();
+        utilityGrid.setHgap(12);
+        utilityGrid.setVgap(12);
+        utilityGrid.setPadding(new Insets(16));
 
-        feedbackGrid.add(liveSourceLabel, 0, 0);
-        feedbackGrid.add(liveNoteIndexLabel,0, 1);
-        feedbackGrid.add(liveFrequencyLabel, 0, 2);
-        feedbackGrid.add(liveMidiLabel, 0, 3);
-        feedbackGrid.add(liveCentsLabel, 0, 4);
-        feedbackGrid.add(liveNameLabel, 0, 5);
+        Button panicButton = createPanicButton();
 
-        TitledPane feedbackPane = new TitledPane("Live Note Feedback", feedbackGrid);
-        feedbackPane.setCollapsible(false);
+        Label helpLabel = new Label("Use this if notes get stuck or MIDI behaves unexpectedly.");
 
-        return feedbackPane;
+        utilityGrid.add(panicButton, 0, 0);
+        utilityGrid.add(helpLabel, 1, 0);
+
+        TitledPane utilityPane = new TitledPane("Utilities", utilityGrid);
+        utilityPane.setCollapsible(true);
+        utilityPane.setExpanded(false);
+
+        return utilityPane;
     }
 
-// ----------- DEBUG PANEL ----------- //
+    private Button createPanicButton() {
+        Button panicButton = new Button("Panic / All Notes Off");
+        panicButton.setOnAction(event -> panicAllNotesOff());
+        return panicButton;
+    }
+
+// ----------- ADVANCED DEBUG PANE ----------- //
 
     private TitledPane createTuningDebugPane() {
         Spinner<Integer> noteIndexSpinner = new Spinner<>(-48, 48, 0);
@@ -436,64 +398,126 @@ public final class MainView implements AutoCloseable {
         debugGrid.add(centsLabel, 0, 3, 4, 1);
         debugGrid.add(nameLabel, 0, 4, 4, 1);
 
-        TitledPane debugPane = new TitledPane("Tuning Debug", debugGrid);
-        debugPane.setCollapsible(false);
+        TitledPane debugPane = new TitledPane("Advanced Tuning Debug", debugGrid);
+        debugPane.setCollapsible(true);
+        debugPane.setExpanded(false);
 
         return debugPane;
     }
 
-// ----------- UI DROPDOWN BOXES ----------- //
 
-    private ComboBox<String> createTuningSystemBox() {
-        ComboBox<String> box = new ComboBox<>();
-        box.getItems().addAll(TuningSystem.displayNames());
+// ----------- INPUT EVENT HANDLERS ----------- //
 
-        box.valueProperty().bindBidirectional(appState.tuningSystemProperty());
-        return box;
-    }
+public void handleKeyPressed(KeyEvent event) {
+        if (!isComputerKeyboardInputEnabled()) {
+            return;
+        }
 
-    private ComboBox<String> createTonicBox() {
-        ComboBox<String> box = new ComboBox<>();
-        box.getItems().addAll(
-                "C", "C#/Db", "D", "D#/Eb", "E", "F",
-                "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B"
+        if (shouldIgnoreKeyEvent(event)) {
+            return;
+        }
+
+        KeyCode keyCode = event.getCode();
+
+        if (activeComputerKeys.contains(keyCode)) {
+            return;
+        }
+
+        OptionalInt noteIndex = KeyboardLayout.noteIndexFor(keyCode);
+
+        if (noteIndex.isEmpty()) {
+            return;
+        }
+
+        activeComputerKeys.add(keyCode);
+
+        TunedNote tunedNote = tuningEngine.resolve(noteIndex.getAsInt());
+
+        midiSoundEngine.noteOn(
+                keyCode.getCode(),
+                noteIndex.getAsInt(),
+                tunedNote,
+                100
         );
-        box.valueProperty().bindBidirectional(appState.tonicProperty());
-        return box;
+
+        updateLiveFeedback("Computer Keyboard", noteIndex.getAsInt(), tunedNote);
+
+        event.consume();
     }
 
-    // N-TET divisions....min = 2, max = 72
-    private Spinner<Integer> createDivisionsSpinner() {
-        Spinner<Integer> spinner = new Spinner<>(2, 72, appState.getNTetDivisions());
-        spinner.setEditable(true);
+    public void handleKeyReleased(KeyEvent event) {
+        if (!isComputerKeyboardInputEnabled()) {
+            return;
+        }
 
-        appState.nTetDivisionsProperty().bind(spinner.valueProperty());
+        KeyCode keyCode = event.getCode();
+        OptionalInt noteIndex = KeyboardLayout.noteIndexFor(keyCode);
 
-        return spinner;
+        if (noteIndex.isEmpty()) {
+            return;
+        }
+
+        activeComputerKeys.remove(keyCode);
+        midiSoundEngine.noteOff(keyCode.getCode());
+
+        event.consume();
     }
 
-    private ComboBox<String> createInstrumentBox() {
-        ComboBox<String> box = new ComboBox<>();
-        box.getItems().addAll(GeneralMidiInstruments.displayNames());
+    // MIDI note 60 maps to noteIndex 0, controller's 'middle C' plays the selected tonic
+    private void handleMidiNoteOn(int midiNote, int velocity) {
+        if (!isMidiInputEnabled()) {
+            return;
+        }
+        
+        int noteIndex = midiNote - MidiInputProvider.REFERENCE_MIDI_NOTE;
+        TunedNote tunedNote = tuningEngine.resolve(noteIndex);
 
-        box.valueProperty().bindBidirectional(appState.instrumentProperty());
+        midiSoundEngine.noteOn(
+                midiNote,
+                noteIndex,
+                tunedNote,
+                velocity
+        );
 
-        return box;
+        updateLiveFeedback("MIDI", noteIndex, tunedNote);
     }
 
-    private ComboBox<String> createInputModeBox() {
-        ComboBox<String> box = new ComboBox<>();
-        box.getItems().addAll("MIDI", "Computer Keyboard");
-        box.valueProperty().bindBidirectional(appState.inputModeProperty());
-        return box;
+    private void handleMidiNoteOff(int midiNote) {
+        if (!isMidiInputEnabled()) {
+            return;
+        }
+
+        midiSoundEngine.noteOff(midiNote);
     }
 
-    private ComboBox<String> createWaveformBox() {
-        ComboBox<String> box = new ComboBox<>();
-        box.getItems().addAll("Sine", "Square", "Saw", "Triangle");
-        box.valueProperty().bindBidirectional(appState.waveformProperty());
-        return box;
+// ----------- INPUT MODE HANDLERS ------------ //
+
+    // avoids playing notes while the user is typing into editable controls
+    private boolean shouldIgnoreKeyEvent(KeyEvent event) {
+        return event.getTarget() instanceof TextInputControl;
     }
+
+    private boolean isComputerKeyboardInputEnabled() {
+        return "Computer Keyboard".equals(appState.getInputMode());
+    }
+
+    private boolean isMidiInputEnabled() {
+        return "MIDI".equals(appState.getInputMode());
+    }
+
+// ----------- PLAYBACK / MIDI SAFETY ACTIONS ----------- //
+
+    private void panicAllNotesOff() {
+        activeComputerKeys.clear();
+        midiSoundEngine.allNotesOff();
+    }
+
+    private void disconnectMidiDevice() {
+        panicAllNotesOff();
+        midiInputProvider.close();
+    }
+
+// ----------- LIFECYCLE ----------- //
 
     @Override
     public void close() {
