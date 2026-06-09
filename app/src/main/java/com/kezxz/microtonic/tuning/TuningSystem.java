@@ -3,6 +3,7 @@ package com.kezxz.microtonic.tuning;
 import java.util.Arrays;
 import java.util.List;
 
+// supported tuning systems shown in the main tuning dropdown
 public enum TuningSystem {
     TWELVE_TET("12-tet", "12-TET"),
     JUST_INTONATION_CHROMATIC("ji-12-chromatic", "Just Intonation - 12-tone chromatic"),
@@ -18,9 +19,6 @@ public enum TuningSystem {
         this.displayName = displayName;
     }
 
-    /**
-     * Later this can be used for presets, saved settings, or config files.
-     */
     public String id() {
         return id;
     }
@@ -35,16 +33,16 @@ public enum TuningSystem {
                 .toList();
     }
 
-    /**
-     * Converts a UI display name into a TuningSystem.
-     *
-     * Unknown names safely fall back to 12-TET.
-     */
+    // converts a UI display name into a TuningSystem, falls back to 12-TET
     public static TuningSystem fromDisplayName(String displayName) {
         return Arrays.stream(values())
                 .filter(system -> system.displayName.equals(displayName))
                 .findFirst()
                 .orElse(defaultSystem());
+    }
+
+    public static boolean isValidDisplayName(String displayName) {
+        return displayNames().contains(displayName);
     }
 
     public static TuningSystem defaultSystem() {

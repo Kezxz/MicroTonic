@@ -1,12 +1,11 @@
 package com.kezxz.microtonic.tuning;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
- * Represents the 12 pitch classes used by the app's tonic selector.
- *
- * Enharmonic spellings are grouped together:
- * - C#/Db is one pitch class
- * - D#/Eb is one pitch class
- * - etc.
+ * represents the 12 pitch classes used by the tonic selector
+ * enharmonic spellings are grouped together
  */
 public enum PitchClass {
     C("C", 0),
@@ -22,10 +21,9 @@ public enum PitchClass {
     A_SHARP_B_FLAT("A#/Bb", 10),
     B("B", 11);
 
-    private final String displayName; // text shown in the UI
+    private final String displayName;
 
-    // Distance from C in normal chromatic semitones.
-    // This will help convert tonic choices to reference frequencies later.
+    // distance from C in 12-TET semitones, used for tonic frequency lookup
     private final int semitoneOffsetFromC;
 
     PitchClass(String displayName, int semitoneOffsetFromC) {
@@ -41,13 +39,21 @@ public enum PitchClass {
         return semitoneOffsetFromC;
     }
 
-    /**
-     * Converts a UI display name into a PitchClass.
-     *
-     * Example:
-     * - "C" becomes PitchClass.C
-     * - "F#/Gb" becomes PitchClass.F_SHARP_G_FLAT
-     */
+    public static List<String> displayNames() {
+        return Arrays.stream(values())
+                .map(PitchClass::displayName)
+                .toList();
+    }
+
+    public static boolean isValidDisplayName(String displayName) {
+        return displayNames().contains(displayName);
+    }
+
+    public static PitchClass defaultPitchClass() {
+        return C;
+    }
+
+    // converts a UI display name into a PitchClass -- "F#/Gb" becomes PitchClass.F_SHARP_G_FLAT
     public static PitchClass fromDisplayName(String displayName) {
         for (PitchClass pitchClass : values()) {
             if (pitchClass.displayName.equals(displayName)) {

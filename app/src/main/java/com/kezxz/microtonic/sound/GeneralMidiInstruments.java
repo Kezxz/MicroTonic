@@ -4,17 +4,9 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * General MIDI instrument definitions used by MicroTonic.
+ * general MIDI instruments available in the instrument dropdown
  *
- * Java's MidiChannel.programChange(int) uses zero-based program numbers:
- * - 0  = Acoustic Grand Piano
- * - 11 = Vibraphone
- * - 40 = Violin
- * - etc.
- *
- * Each instrument is declared once with:
- * - a display name for the UI
- * - a General MIDI program number for playback
+ * program numbers are zero-based for Java's MidiChannel API
  */
 public enum GeneralMidiInstruments {
     ACOUSTIC_GRAND_PIANO("Acoustic Grand Piano", 0),
@@ -42,20 +34,17 @@ public enum GeneralMidiInstruments {
         return program;
     }
 
-    /**
-     * Returns all display names for use in JavaFX dropdowns.
-     */
     public static List<String> displayNames() {
         return Arrays.stream(values())
                 .map(GeneralMidiInstruments::displayName)
                 .toList();
     }
 
-    /**
-     * Converts a UI display name into a General MIDI program number.
-     *
-     * Unknown names safely fall back to Acoustic Grand Piano.
-     */
+    public static boolean isValidDisplayName(String displayName) {
+        return displayNames().contains(displayName);
+    }
+
+    // converts display name into a general MIDI program number -- unknown name falls back to Acoustic Grand Piano
     public static int programForDisplayName(String displayName) {
         return Arrays.stream(values())
                 .filter(instrument -> instrument.displayName.equals(displayName))
@@ -64,9 +53,6 @@ public enum GeneralMidiInstruments {
                 .orElse(ACOUSTIC_GRAND_PIANO.program);
     }
 
-    /**
-     * Default instrument used when the app starts.
-     */
     public static GeneralMidiInstruments defaultInstrument() {
         return ACOUSTIC_GRAND_PIANO;
     }
