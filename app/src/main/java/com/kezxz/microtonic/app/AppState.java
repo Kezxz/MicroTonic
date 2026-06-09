@@ -8,18 +8,23 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
+/**
+ * in-memory model for user-seleced app settings
+ * 
+ * JavaFX properties allow UI controls to bind directly to these values
+ */
 public final class AppState {
 
     private final StringProperty tuningSystem = new SimpleStringProperty(
-            TuningSystem.defaultSystem().displayName()                                                             
-    );                                                                                                             
-    private final StringProperty tonic = new SimpleStringProperty("C");                             
-    private final IntegerProperty nTetDivisions = new SimpleIntegerProperty(12);                   
-    private final StringProperty instrument = new SimpleStringProperty(
-            GeneralMidiInstruments.defaultInstrument().displayName()                                          
+            TuningSystem.defaultSystem().displayName()
     );
-    private final StringProperty inputMode = new SimpleStringProperty("Computer Keyboard");    
-    private final StringProperty waveform = new SimpleStringProperty("Sine");                
+    private final StringProperty tonic = new SimpleStringProperty("C");
+    private final IntegerProperty nTetDivisions = new SimpleIntegerProperty(12);
+    private final StringProperty instrument = new SimpleStringProperty(
+            GeneralMidiInstruments.defaultInstrument().displayName()
+    );
+    private final StringProperty inputMode = new SimpleStringProperty("Computer Keyboard");
+    private final StringProperty waveform = new SimpleStringProperty("Sine");
 
     public StringProperty tuningSystemProperty() {
         return tuningSystem;
@@ -53,7 +58,18 @@ public final class AppState {
         return nTetDivisions.get();
     }
 
+    // clamp saved or user-entered values to the supported UI range
     public void setNTetDivisions(int nTetDivisions) {
+        if (nTetDivisions < 2) {
+            this.nTetDivisions.set(2);
+            return;
+        }
+
+        if (nTetDivisions > 72) {
+            this.nTetDivisions.set(72);
+            return;
+        }
+
         this.nTetDivisions.set(nTetDivisions);
     }
 

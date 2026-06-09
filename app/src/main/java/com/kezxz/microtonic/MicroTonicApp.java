@@ -1,7 +1,9 @@
 package com.kezxz.microtonic;
 
 import com.kezxz.microtonic.app.AppState;
+import com.kezxz.microtonic.app.AppPreferences;
 import com.kezxz.microtonic.ui.MainView;
+
 import javafx.application.Application;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -9,39 +11,32 @@ import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 
 /**
- * Main JavaFX entry point for MicroTonic.
+ * JavaFX entry point for MicroTonic
  *
- * This class should stay small. Its job is only to:
- * - create the shared application state
- * - create the main view
- * - create the JavaFX scene/window
- * - launch the app
- *
- * Most actual app logic should live elsewhere.
+ * keeps startup, scene creation, and shutdown cleanup in one place
  */
 public final class MicroTonicApp extends Application {
-private MainView mainView;
+    private MainView mainView;
+    private AppPreferences appPreferences;
+    private AppState appState;
 
-    /**
-     * Called automatically by JavaFX when the app starts.
-     */
+    //called automatically by JavaFX when the app starts
     @Override
     public void start(Stage stage) {
-        // Shared state object that stores current UI selections.
-        AppState appState = new AppState();
+        // load saved settings before UI binds to AppState
+        appState = new AppState();
+        appPreferences = new AppPreferences();
+        appPreferences.loadInto(appState);
 
-        // MainView builds the visual controls for the app.
+        // build the main view and register global keyboard handlers
         mainView = new MainView(appState);
-
-        // Parent is the root JavaFX node returned by the view.
         Parent root = mainView.build();
 
-        // The Scene contains the root visual tree and controls the window size.
         Scene scene = new Scene(root, 560, 430);
         scene.addEventFilter(KeyEvent.KEY_PRESSED, mainView::handleKeyPressed);
         scene.addEventFilter(KeyEvent.KEY_RELEASED, mainView::handleKeyReleased);
 
-        // Load the CSS file from src/main/resources.
+        // load application styling from resources
         scene.getStylesheets().add(
                 MicroTonicApp.class.getResource("/com/kezxz/microtonic/styles.css").toExternalForm()
         );
@@ -52,13 +47,18 @@ private MainView mainView;
         stage.setMinHeight(400);
         stage.setOnCloseRequest(event -> closeMainView());
         stage.show();
-        stage.setAlwaysOnTop(true);
+        stage.setAlwaysOnTop(true); // briefly force the window forward on launch
         stage.toFront();
         stage.requestFocus();
-        stage.setAlwaysOnTop(false);
+        stage.setAlwaysOnTop(false); // allow minizing
     }
 
+    // saves settings and releases view-owned resources
     private void closeMainView() {
+        if (appPreferences != null && appState != null) {
+            appPreferences.save(appState);
+        }
+
         if (mainView != null) {
             mainView.close();
         }
