@@ -2,6 +2,7 @@ package com.kezxz.microtonic.app;
 
 import com.kezxz.microtonic.sound.GeneralMidiInstruments;
 import com.kezxz.microtonic.tuning.TuningSystem;
+import com.kezxz.microtonic.input.InputMode;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -10,8 +11,6 @@ import javafx.beans.property.StringProperty;
 
 /**
  * in-memory model for user-seleced app settings
- * 
- * JavaFX properties allow UI controls to bind directly to these values
  */
 public final class AppState {
 
@@ -23,7 +22,9 @@ public final class AppState {
     private final StringProperty instrument = new SimpleStringProperty(
             GeneralMidiInstruments.defaultInstrument().displayName()
     );
-    private final StringProperty inputMode = new SimpleStringProperty("Computer Keyboard");
+    private final StringProperty inputMode = new SimpleStringProperty(
+            InputMode.defaultMode().displayName()
+    );
     private final StringProperty waveform = new SimpleStringProperty("Sine");
 
     public StringProperty tuningSystemProperty() {

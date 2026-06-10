@@ -1,6 +1,7 @@
 package com.kezxz.microtonic.app;
 
 import com.kezxz.microtonic.sound.GeneralMidiInstruments;
+import com.kezxz.microtonic.input.InputMode;
 import com.kezxz.microtonic.tuning.PitchClass;
 import com.kezxz.microtonic.tuning.TuningSystem;
 
@@ -79,11 +80,11 @@ public final class AppPreferences {
     }
 
     private String validInputMode(String value) {
-        if ("MIDI".equals(value) || "Computer Keyboard".equals(value)) {
+        if (InputMode.isValidDisplayName(value)) {
             return value;
         }
 
-        return "Computer Keyboard";
+        return InputMode.defaultMode().displayName();
     }
 
     private String validWaveform(String value) {

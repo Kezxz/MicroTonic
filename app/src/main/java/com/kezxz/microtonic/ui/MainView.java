@@ -4,6 +4,7 @@ import com.kezxz.microtonic.app.AppState;
 import com.kezxz.microtonic.input.KeyboardLayout;
 import com.kezxz.microtonic.input.MidiDeviceService;
 import com.kezxz.microtonic.input.MidiInputProvider;
+import com.kezxz.microtonic.input.InputMode;
 import com.kezxz.microtonic.tuning.TunedNote;
 import com.kezxz.microtonic.tuning.TuningEngine;
 import com.kezxz.microtonic.tuning.TuningSystem;
@@ -171,7 +172,8 @@ public final class MainView implements AutoCloseable {
 
     private ComboBox<String> createInputModeBox() {
         ComboBox<String> box = new ComboBox<>();
-        box.getItems().addAll("MIDI", "Computer Keyboard");
+        box.getItems().addAll(InputMode.displayNames());
+        
         box.valueProperty().bindBidirectional(appState.inputModeProperty());
         return box;
     }
@@ -498,11 +500,11 @@ public void handleKeyPressed(KeyEvent event) {
     }
 
     private boolean isComputerKeyboardInputEnabled() {
-        return "Computer Keyboard".equals(appState.getInputMode());
+        return InputMode.fromDisplayName(appState.getInputMode()) == InputMode.COMPUTER_KEYBOARD;
     }
 
     private boolean isMidiInputEnabled() {
-        return "MIDI".equals(appState.getInputMode());
+        return InputMode.fromDisplayName(appState.getInputMode()) == InputMode.MIDI;
     }
 
 // ----------- PLAYBACK / MIDI SAFETY ACTIONS ----------- //
