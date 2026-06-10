@@ -10,6 +10,7 @@ import com.kezxz.microtonic.tuning.TuningEngine;
 import com.kezxz.microtonic.tuning.TuningSystem;
 import com.kezxz.microtonic.sound.midi.MidiSoundEngine;
 import com.kezxz.microtonic.sound.GeneralMidiInstruments;
+import com.kezxz.microtonic.sound.Waveform;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -173,14 +174,15 @@ public final class MainView implements AutoCloseable {
     private ComboBox<String> createInputModeBox() {
         ComboBox<String> box = new ComboBox<>();
         box.getItems().addAll(InputMode.displayNames());
-        
+
         box.valueProperty().bindBidirectional(appState.inputModeProperty());
         return box;
     }
 
     private ComboBox<String> createWaveformBox() {
         ComboBox<String> box = new ComboBox<>();
-        box.getItems().addAll("Sine", "Square", "Saw", "Triangle");
+        box.getItems().addAll(Waveform.displayNames());
+
         box.valueProperty().bindBidirectional(appState.waveformProperty());
         return box;
     }

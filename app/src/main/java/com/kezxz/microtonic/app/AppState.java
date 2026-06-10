@@ -1,6 +1,7 @@
 package com.kezxz.microtonic.app;
 
 import com.kezxz.microtonic.sound.GeneralMidiInstruments;
+import com.kezxz.microtonic.sound.Waveform;
 import com.kezxz.microtonic.tuning.TuningSystem;
 import com.kezxz.microtonic.input.InputMode;
 
@@ -25,7 +26,9 @@ public final class AppState {
     private final StringProperty inputMode = new SimpleStringProperty(
             InputMode.defaultMode().displayName()
     );
-    private final StringProperty waveform = new SimpleStringProperty("Sine");
+    private final StringProperty waveform = new SimpleStringProperty(
+            Waveform.defaultWaveform().displayName()
+    );
 
     public StringProperty tuningSystemProperty() {
         return tuningSystem;
