@@ -8,10 +8,10 @@ import com.kezxz.microtonic.input.InputMode;
 import com.kezxz.microtonic.tuning.TunedNote;
 import com.kezxz.microtonic.tuning.TuningEngine;
 import com.kezxz.microtonic.tuning.TuningSystem;
-import com.kezxz.microtonic.sound.midi.MidiSoundEngine;
 import com.kezxz.microtonic.sound.GeneralMidiInstruments;
 import com.kezxz.microtonic.sound.Waveform;
 import com.kezxz.microtonic.sound.SoundEngine;
+import com.kezxz.microtonic.sound.SoundEngineFactory;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -39,7 +39,6 @@ public final class MainView implements AutoCloseable {
     private final AppState appState;
     private final TuningEngine tuningEngine;
     private final SoundEngine soundEngine;
-    // private final MidiSoundEngine midiSoundEngine;
     private final MidiDeviceService midiDeviceService;
     private final MidiInputProvider midiInputProvider;
     private final Set<KeyCode> activeComputerKeys = new HashSet<>();
@@ -54,7 +53,7 @@ public final class MainView implements AutoCloseable {
     public MainView(AppState appState) {
         this.appState = appState;
         this.tuningEngine = new TuningEngine(appState);
-        this.soundEngine = new MidiSoundEngine();
+        this.soundEngine = SoundEngineFactory.createDefault();
         this.midiDeviceService = new MidiDeviceService();
         this.midiInputProvider = new MidiInputProvider();
         this.appState.instrumentProperty().addListener((observable, oldValue, newValue) ->
