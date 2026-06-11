@@ -11,6 +11,7 @@ import com.kezxz.microtonic.tuning.TuningSystem;
 import com.kezxz.microtonic.sound.midi.MidiSoundEngine;
 import com.kezxz.microtonic.sound.GeneralMidiInstruments;
 import com.kezxz.microtonic.sound.Waveform;
+import com.kezxz.microtonic.sound.SoundEngine;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -37,7 +38,8 @@ public final class MainView implements AutoCloseable {
 
     private final AppState appState;
     private final TuningEngine tuningEngine;
-    private final MidiSoundEngine midiSoundEngine;
+    private final SoundEngine soundEngine;
+    // private final MidiSoundEngine midiSoundEngine;
     private final MidiDeviceService midiDeviceService;
     private final MidiInputProvider midiInputProvider;
     private final Set<KeyCode> activeComputerKeys = new HashSet<>();
@@ -52,16 +54,16 @@ public final class MainView implements AutoCloseable {
     public MainView(AppState appState) {
         this.appState = appState;
         this.tuningEngine = new TuningEngine(appState);
-        this.midiSoundEngine = new MidiSoundEngine();
+        this.soundEngine = new MidiSoundEngine();
         this.midiDeviceService = new MidiDeviceService();
         this.midiInputProvider = new MidiInputProvider();
         this.appState.instrumentProperty().addListener((observable, oldValue, newValue) ->
-                midiSoundEngine.setInstrumentByName(newValue)
+                soundEngine.setInstrumentByName(newValue)
         );
         this.appState.inputModeProperty().addListener((observable, oldValue, newValue) ->
                 panicAllNotesOff()
         );
-        this.midiSoundEngine.setInstrumentByName(appState.getInstrument());
+        this.soundEngine.setInstrumentByName(appState.getInstrument());
     }
 
 // ----------- ROOT VIEW ----------- //
@@ -383,7 +385,7 @@ public final class MainView implements AutoCloseable {
             ));
             nameLabel.setText("Name: " + tunedNote.displayName());
 
-            midiSoundEngine.playTestNote(noteIndex, noteIndex, tunedNote);
+            soundEngine.playTestNote(noteIndex, noteIndex, tunedNote);
             updateLiveFeedback("Debug Test Note", noteIndex, tunedNote);
         });
 
@@ -437,7 +439,7 @@ public void handleKeyPressed(KeyEvent event) {
 
         TunedNote tunedNote = tuningEngine.resolve(noteIndex.getAsInt());
 
-        midiSoundEngine.noteOn(
+        soundEngine.noteOn(
                 keyCode.getCode(),
                 noteIndex.getAsInt(),
                 tunedNote,
@@ -462,7 +464,7 @@ public void handleKeyPressed(KeyEvent event) {
         }
 
         activeComputerKeys.remove(keyCode);
-        midiSoundEngine.noteOff(keyCode.getCode());
+        soundEngine.noteOff(keyCode.getCode());
 
         event.consume();
     }
@@ -476,7 +478,7 @@ public void handleKeyPressed(KeyEvent event) {
         int noteIndex = midiNote - MidiInputProvider.REFERENCE_MIDI_NOTE;
         TunedNote tunedNote = tuningEngine.resolve(noteIndex);
 
-        midiSoundEngine.noteOn(
+        soundEngine.noteOn(
                 midiNote,
                 noteIndex,
                 tunedNote,
@@ -491,7 +493,7 @@ public void handleKeyPressed(KeyEvent event) {
             return;
         }
 
-        midiSoundEngine.noteOff(midiNote);
+        soundEngine.noteOff(midiNote);
     }
 
 // ----------- INPUT MODE HANDLERS ------------ //
@@ -513,7 +515,7 @@ public void handleKeyPressed(KeyEvent event) {
 
     private void panicAllNotesOff() {
         activeComputerKeys.clear();
-        midiSoundEngine.allNotesOff();
+        soundEngine.allNotesOff();
     }
 
     private void disconnectMidiDevice() {
@@ -526,6 +528,6 @@ public void handleKeyPressed(KeyEvent event) {
     @Override
     public void close() {
         disconnectMidiDevice();
-        midiSoundEngine.close();
+        soundEngine.close();
     }
 }

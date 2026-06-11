@@ -1,7 +1,8 @@
 package com.kezxz.microtonic.sound.midi;
 
-import com.kezxz.microtonic.tuning.TunedNote;
 import com.kezxz.microtonic.sound.GeneralMidiInstruments;
+import com.kezxz.microtonic.sound.SoundEngine;
+import com.kezxz.microtonic.tuning.TunedNote;
 
 import javax.sound.midi.MidiChannel;
 import javax.sound.midi.MidiSystem;
@@ -14,20 +15,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Sound engine backed by Java's built-in MIDI synthesizer.
+ * SoundEngine implementation backed by Java's built-in MIDI synthesizer
  *
- * This is our first real sound output path.
- *
- * Important MVP behavior:
- * - uses General MIDI instruments
- * - starts with Acoustic Grand Piano
- * - applies pitch bend before note-on
- * - uses VoiceManager so each active note can get its own MIDI channel
- *
- * This class is intentionally small right now. We will improve it as we add
- * keyboard input, MIDI input, instrument selection, and panic/all-notes-off.
+ * uses pitch bend and channel-per-note allocation for microtonal playback
  */
-public final class MidiSoundEngine implements AutoCloseable {
+public final class MidiSoundEngine implements SoundEngine {
 
     private static final int DEFAULT_INSTRUMENT_PROGRAM = 0; // Acoustic Grand Piano
     private static final int DEFAULT_VELOCITY = 100;
@@ -43,9 +35,7 @@ public final class MidiSoundEngine implements AutoCloseable {
 
     private boolean started;
 
-    /**
-     * Opens the Java MIDI synthesizer if it is not already open.
-     */
+    // opens the Java MIDI synthesizer if needed
     public void start() {
         if (started) {
             return;
@@ -67,11 +57,8 @@ public final class MidiSoundEngine implements AutoCloseable {
         }
     }
 
-    /**
-     * Plays one short note for manual testing from the debug UI.
-     *
-     * Later, real keyboard/MIDI input will call noteOn and noteOff directly.
-     */
+    // plays one short test note for manual testing from the debug UI
+    @Override
     public void playTestNote(int inputNoteId, int noteIndex, TunedNote tunedNote) {
         noteOn(inputNoteId, noteIndex, tunedNote, DEFAULT_VELOCITY);
 
@@ -82,14 +69,8 @@ public final class MidiSoundEngine implements AutoCloseable {
         );
     }
 
-    /**
-     * Starts a note using the tuned note information.
-     *
-     * The tuned note already contains:
-     * - nearest MIDI note
-     * - cents deviation from that MIDI note
-     * - frequency metadata
-     */
+    // applies pitch bend before starting the MIDI note
+    @Override
     public void noteOn(int inputNoteId, int noteIndex, TunedNote tunedNote, int velocity) {
         ensureStarted();
 
@@ -115,9 +96,8 @@ public final class MidiSoundEngine implements AutoCloseable {
         channel.noteOn(voice.midiNote(), voice.velocity());
     }
 
-    /**
-     * Stops a note by its logical input note ID.
-     */
+    // stops a note by its logical input ID
+    @Override
     public void noteOff(int inputNoteId) {
         ensureStarted();
 
@@ -125,9 +105,7 @@ public final class MidiSoundEngine implements AutoCloseable {
         stopVoiceIfPresent(releasedVoice);
     }
 
-    /**
-     * Stops all currently active voices.
-     */
+    @Override
     public void allNotesOff() {
         if (!started || channels == null) {
             return;
@@ -143,16 +121,12 @@ public final class MidiSoundEngine implements AutoCloseable {
         voiceManager.releaseAll();
     }
 
-    /**
-     * Sets the current instrument by UI display name.
-     */
+    @Override
     public void setInstrumentByName(String displayName) {
         setInstrumentProgram(GeneralMidiInstruments.programForDisplayName(displayName));
-}
+    }
 
-    /**
-     * Sets the same General MIDI program on all pitched channels. 0 = Acoustic Piano
-     */
+    // applies the general MIDI program to all usable pitched channels
     public void setInstrumentProgram(int program) {
         if (program < 0 || program > 127) {
             throw new IllegalArgumentException("MIDI program must be between 0 and 127.");
