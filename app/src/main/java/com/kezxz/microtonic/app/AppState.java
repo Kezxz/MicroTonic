@@ -2,6 +2,7 @@ package com.kezxz.microtonic.app;
 
 import com.kezxz.microtonic.sound.GeneralMidiInstruments;
 import com.kezxz.microtonic.sound.Waveform;
+import com.kezxz.microtonic.sound.SoundSource;
 import com.kezxz.microtonic.tuning.TuningSystem;
 import com.kezxz.microtonic.input.InputMode;
 
@@ -22,6 +23,9 @@ public final class AppState {
     private final IntegerProperty nTetDivisions = new SimpleIntegerProperty(12);
     private final StringProperty instrument = new SimpleStringProperty(
             GeneralMidiInstruments.defaultInstrument().displayName()
+    );
+    private final StringProperty soundSource = new SimpleStringProperty(
+            SoundSource.defaultSource().displayName()
     );
     private final StringProperty inputMode = new SimpleStringProperty(
             InputMode.defaultMode().displayName()
@@ -87,6 +91,18 @@ public final class AppState {
 
     public void setInstrument(String instrument) {
         this.instrument.set(instrument);
+    }
+
+    public StringProperty soundSourceProperty() {
+        return soundSource;
+    }
+
+    public String getSoundSource() {
+        return soundSource.get();
+    }
+
+    public void setSoundSource(String soundSource) {
+        this.soundSource.set(soundSource);
     }
 
     public StringProperty inputModeProperty() {

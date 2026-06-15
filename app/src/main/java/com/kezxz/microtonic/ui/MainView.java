@@ -10,6 +10,7 @@ import com.kezxz.microtonic.tuning.TuningEngine;
 import com.kezxz.microtonic.tuning.TuningSystem;
 import com.kezxz.microtonic.sound.GeneralMidiInstruments;
 import com.kezxz.microtonic.sound.Waveform;
+import com.kezxz.microtonic.sound.SoundSource;
 import com.kezxz.microtonic.sound.SoundEngine;
 import com.kezxz.microtonic.sound.SoundEngineFactory;
 import com.kezxz.microtonic.sound.synth.WaveformTestNotePlayer;
@@ -81,6 +82,7 @@ public final class MainView implements AutoCloseable {
         ComboBox<String> tonicBox = createTonicBox();
         Spinner<Integer> divisionsSpinner = createDivisionsSpinner();
         ComboBox<String> instrumentBox = createInstrumentBox();
+        ComboBox<String> soundSourceBox = createSoundSourceBox();
         ComboBox<String> inputModeBox = createInputModeBox();
         ComboBox<String> waveformBox = createWaveformBox();
 
@@ -101,11 +103,14 @@ public final class MainView implements AutoCloseable {
         controlsGrid.add(new Label("Instrument"), 0, 3);
         controlsGrid.add(instrumentBox, 1, 3);
 
-        controlsGrid.add(new Label("Input Mode"), 0, 4);
-        controlsGrid.add(inputModeBox, 1, 4);
+        controlsGrid.add(new Label("Sound Source"), 0, 4);
+        controlsGrid.add(soundSourceBox, 1, 4);
 
-        controlsGrid.add(new Label("Waveform"), 0, 5);
-        controlsGrid.add(waveformBox, 1, 5);
+        controlsGrid.add(new Label("Input Mode"), 0, 5);
+        controlsGrid.add(inputModeBox, 1, 5);
+
+        controlsGrid.add(new Label("Waveform"), 0, 6);
+        controlsGrid.add(waveformBox, 1, 6);
 
         // groups main controls in a titled section
         TitledPane controlsPane = new TitledPane("Main Controls", controlsGrid);
@@ -171,6 +176,15 @@ public final class MainView implements AutoCloseable {
         box.getItems().addAll(GeneralMidiInstruments.displayNames());
 
         box.valueProperty().bindBidirectional(appState.instrumentProperty());
+
+        return box;
+    }
+
+    private ComboBox<String> createSoundSourceBox() {
+        ComboBox<String> box = new ComboBox<>();
+        box.getItems().addAll(SoundSource.displayNames());
+
+        box.valueProperty().bindBidirectional(appState.soundSourceProperty());
 
         return box;
     }

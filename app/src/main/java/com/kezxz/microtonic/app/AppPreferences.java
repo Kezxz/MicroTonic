@@ -2,6 +2,7 @@ package com.kezxz.microtonic.app;
 
 import com.kezxz.microtonic.sound.GeneralMidiInstruments;
 import com.kezxz.microtonic.sound.Waveform;
+import com.kezxz.microtonic.sound.SoundSource;
 import com.kezxz.microtonic.input.InputMode;
 import com.kezxz.microtonic.tuning.PitchClass;
 import com.kezxz.microtonic.tuning.TuningSystem;
@@ -17,6 +18,7 @@ public final class AppPreferences {
     private static final String KEY_TONIC = "tonic";
     private static final String KEY_N_TET_DIVISIONS = "nTetDivisions";
     private static final String KEY_INSTRUMENT = "instrument";
+    private static final String KEY_SOUND_SOURCE = "soundSource";
     private static final String KEY_INPUT_MODE = "inputMode";
     private static final String KEY_WAVEFORM = "waveform";
 
@@ -36,6 +38,9 @@ public final class AppPreferences {
         appState.setInstrument(validInstrument(
                 preferences.get(KEY_INSTRUMENT, appState.getInstrument())
         ));
+        appState.setSoundSource(validSoundSource(
+                preferences.get(KEY_SOUND_SOURCE, appState.getSoundSource())
+        ));
         appState.setInputMode(validInputMode(
                 preferences.get(KEY_INPUT_MODE, appState.getInputMode())
         ));
@@ -50,6 +55,7 @@ public final class AppPreferences {
         preferences.put(KEY_TONIC, appState.getTonic());
         preferences.putInt(KEY_N_TET_DIVISIONS, appState.getNTetDivisions());
         preferences.put(KEY_INSTRUMENT, appState.getInstrument());
+        preferences.put(KEY_SOUND_SOURCE, appState.getSoundSource());
         preferences.put(KEY_INPUT_MODE, appState.getInputMode());
         preferences.put(KEY_WAVEFORM, appState.getWaveform());
     }
@@ -78,6 +84,14 @@ public final class AppPreferences {
         }
 
         return GeneralMidiInstruments.defaultInstrument().displayName();
+    }
+
+    private String validSoundSource(String value) {
+        if (SoundSource.isValidDisplayName(value)) {
+            return value;
+        }
+
+        return SoundSource.defaultSource().displayName();
     }
 
     private String validInputMode(String value) {
