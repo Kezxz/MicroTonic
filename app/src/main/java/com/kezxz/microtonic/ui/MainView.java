@@ -40,7 +40,8 @@ public final class MainView implements AutoCloseable {
 
     private final AppState appState;
     private final TuningEngine tuningEngine;
-    private final SoundEngine soundEngine;
+    private final SoundEngine midiSoundEngine;
+    private final SoundEngine waveformSoundEngine;
     private final MidiDeviceService midiDeviceService;
     private final MidiInputProvider midiInputProvider;
     private final WaveformTestNotePlayer waveformTestNotePlayer;
@@ -56,17 +57,18 @@ public final class MainView implements AutoCloseable {
     public MainView(AppState appState) {
         this.appState = appState;
         this.tuningEngine = new TuningEngine(appState);
-        this.soundEngine = SoundEngineFactory.createDefault();
+        this.midiSoundEngine = SoundEngineFactory.createDefault();
+        this.waveformSoundEngine = SoundEngineFactory.createWaveform(appState);
         this.midiDeviceService = new MidiDeviceService();
         this.midiInputProvider = new MidiInputProvider();
         this.waveformTestNotePlayer = new WaveformTestNotePlayer();
         this.appState.instrumentProperty().addListener((observable, oldValue, newValue) ->
-                soundEngine.setInstrumentByName(newValue)
+                midiSoundEngine.setInstrumentByName(newValue)
         );
-        this.appState.inputModeProperty().addListener((observable, oldValue, newValue) ->
+        this.appState.soundSourceProperty().addListener((observable, oldValue, newValue) ->
                 panicAllNotesOff()
         );
-        this.soundEngine.setInstrumentByName(appState.getInstrument());
+        this.midiSoundEngine.setInstrumentByName(appState.getInstrument());
     }
 
 // ----------- ROOT VIEW ----------- //
@@ -401,7 +403,7 @@ public final class MainView implements AutoCloseable {
             ));
             nameLabel.setText("Name: " + tunedNote.displayName());
 
-            waveformTestNotePlayer.play(tunedNote, appState.getWaveform());
+            selectedSoundEngine().playTestNote(noteIndex, noteIndex, tunedNote);            waveformTestNotePlayer.play(tunedNote, appState.getWaveform());
             updateLiveFeedback("Debug Test Note", noteIndex, tunedNote);
         });
 
@@ -455,7 +457,7 @@ public void handleKeyPressed(KeyEvent event) {
 
         TunedNote tunedNote = tuningEngine.resolve(noteIndex.getAsInt());
 
-        soundEngine.noteOn(
+        selectedSoundEngine().noteOn(
                 keyCode.getCode(),
                 noteIndex.getAsInt(),
                 tunedNote,
@@ -480,7 +482,7 @@ public void handleKeyPressed(KeyEvent event) {
         }
 
         activeComputerKeys.remove(keyCode);
-        soundEngine.noteOff(keyCode.getCode());
+        selectedSoundEngine().noteOff(keyCode.getCode());
 
         event.consume();
     }
@@ -494,7 +496,7 @@ public void handleKeyPressed(KeyEvent event) {
         int noteIndex = midiNote - MidiInputProvider.REFERENCE_MIDI_NOTE;
         TunedNote tunedNote = tuningEngine.resolve(noteIndex);
 
-        soundEngine.noteOn(
+        selectedSoundEngine().noteOn(
                 midiNote,
                 noteIndex,
                 tunedNote,
@@ -509,7 +511,7 @@ public void handleKeyPressed(KeyEvent event) {
             return;
         }
 
-        soundEngine.noteOff(midiNote);
+        selectedSoundEngine().noteOff(midiNote);
     }
 
 // ----------- INPUT MODE HANDLERS ------------ //
@@ -527,11 +529,20 @@ public void handleKeyPressed(KeyEvent event) {
         return InputMode.fromDisplayName(appState.getInputMode()) == InputMode.MIDI;
     }
 
+    private SoundEngine selectedSoundEngine() {
+        if (SoundSource.fromDisplayName(appState.getSoundSource()) == SoundSource.SYNTH_WAVEFORM) {
+            return waveformSoundEngine;
+        }
+
+    return midiSoundEngine;
+    }
+
 // ----------- PLAYBACK / MIDI SAFETY ACTIONS ----------- //
 
     private void panicAllNotesOff() {
         activeComputerKeys.clear();
-        soundEngine.allNotesOff();
+        midiSoundEngine.allNotesOff();
+        waveformSoundEngine.allNotesOff();
     }
 
     private void disconnectMidiDevice() {
@@ -544,6 +555,7 @@ public void handleKeyPressed(KeyEvent event) {
     @Override
     public void close() {
         disconnectMidiDevice();
-        soundEngine.close();
+        midiSoundEngine.close();
+        waveformSoundEngine.close();
     }
 }
