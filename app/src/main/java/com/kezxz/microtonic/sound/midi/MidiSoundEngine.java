@@ -161,7 +161,7 @@ public final class MidiSoundEngine implements SoundEngine {
         }
 
         channel.noteOff(voice.midiNote());
-        channel.setPitchBend(PitchBendCalculator.CENTER_PITCH_BEND);
+        // channel.setPitchBend(PitchBendCalculator.CENTER_PITCH_BEND);
     }
 
     private void ensureStarted() {
