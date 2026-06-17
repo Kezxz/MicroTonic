@@ -13,7 +13,6 @@ import com.kezxz.microtonic.sound.Waveform;
 import com.kezxz.microtonic.sound.SoundSource;
 import com.kezxz.microtonic.sound.SoundEngine;
 import com.kezxz.microtonic.sound.SoundEngineFactory;
-import com.kezxz.microtonic.sound.synth.WaveformTestNotePlayer;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -44,7 +43,6 @@ public final class MainView implements AutoCloseable {
     private final SoundEngine waveformSoundEngine;
     private final MidiDeviceService midiDeviceService;
     private final MidiInputProvider midiInputProvider;
-    private final WaveformTestNotePlayer waveformTestNotePlayer;
     private final Set<KeyCode> activeComputerKeys = new HashSet<>();
 
     private final Label liveSourceLabel = new Label("Source: —");
@@ -61,7 +59,6 @@ public final class MainView implements AutoCloseable {
         this.waveformSoundEngine = SoundEngineFactory.createWaveform(appState);
         this.midiDeviceService = new MidiDeviceService();
         this.midiInputProvider = new MidiInputProvider();
-        this.waveformTestNotePlayer = new WaveformTestNotePlayer();
         this.appState.instrumentProperty().addListener((observable, oldValue, newValue) ->
                 midiSoundEngine.setInstrumentByName(newValue)
         );
@@ -403,7 +400,7 @@ public final class MainView implements AutoCloseable {
             ));
             nameLabel.setText("Name: " + tunedNote.displayName());
 
-            selectedSoundEngine().playTestNote(noteIndex, noteIndex, tunedNote);            waveformTestNotePlayer.play(tunedNote, appState.getWaveform());
+            selectedSoundEngine().playTestNote(noteIndex, noteIndex, tunedNote);
             updateLiveFeedback("Debug Test Note", noteIndex, tunedNote);
         });
 
