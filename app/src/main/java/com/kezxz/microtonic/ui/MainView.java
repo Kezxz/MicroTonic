@@ -85,6 +85,8 @@ public final class MainView implements AutoCloseable {
         ComboBox<String> inputModeBox = createInputModeBox();
         ComboBox<String> waveformBox = createWaveformBox();
 
+        bindContextualControlState(divisionsSpinner, instrumentBox, waveformBox);
+
         GridPane controlsGrid = new GridPane();
         controlsGrid.setHgap(12);
         controlsGrid.setVgap(12);
@@ -511,6 +513,24 @@ public void handleKeyPressed(KeyEvent event) {
         selectedSoundEngine().noteOff(midiNote);
     }
 
+    private void bindContextualControlState(
+            Spinner<Integer> divisionsSpinner,
+            ComboBox<String> instrumentBox,
+            ComboBox<String> waveformBox
+    ) {
+        divisionsSpinner.disableProperty().bind(
+                appState.tuningSystemProperty().map(tuningSystem -> !isNtetSelected())
+        );
+
+        instrumentBox.disableProperty().bind(
+                appState.soundSourceProperty().map(soundSource -> !isGeneralMidiSelected())
+        );
+
+        waveformBox.disableProperty().bind(
+                appState.soundSourceProperty().map(soundSource -> !isSynthWaveformSelected())
+        );
+    }
+
 // ----------- INPUT MODE HANDLERS ------------ //
 
     // avoids playing notes while the user is typing into editable controls
@@ -534,6 +554,19 @@ public void handleKeyPressed(KeyEvent event) {
     return midiSoundEngine;
     }
 
+// ----------- UI HELPERS ----------- //
+
+    private boolean isNtetSelected() {
+        return TuningSystem.fromDisplayName(appState.getTuningSystem()) == TuningSystem.N_TET;
+    }
+
+    private boolean isGeneralMidiSelected() {
+        return SoundSource.fromDisplayName(appState.getSoundSource()) == SoundSource.GENERAL_MIDI;
+    }
+
+    private boolean isSynthWaveformSelected() {
+        return SoundSource.fromDisplayName(appState.getSoundSource()) == SoundSource.SYNTH_WAVEFORM;
+    }
 // ----------- PLAYBACK / MIDI SAFETY ACTIONS ----------- //
 
     private void panicAllNotesOff() {
