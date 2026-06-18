@@ -18,6 +18,8 @@ public final class WaveformSoundEngine implements SoundEngine {
     private static final float SAMPLE_RATE = 44_100.0f;
     private static final int BUFFER_FRAMES = 512;
     private static final double MAX_AMPLITUDE = 0.18;
+    private static final double ATTACK_SECONDS = 0.005;
+    private static final double RELEASE_SECONDS = 0.035;
 
     private final AppState appState;
     private final Map<Integer, ActiveSynthVoice> activeVoices = new ConcurrentHashMap<>();
@@ -102,7 +104,9 @@ public final class WaveformSoundEngine implements SoundEngine {
         private final Waveform waveform;
         private final double amplitude;
 
-        private volatile boolean running;
+        private volatile boolean releaseRequested;
+        private volatile long releaseStartSample = -1;
+
         private Thread playbackThread;
 
         private ActiveSynthVoice(int inputNoteId, double frequencyHz, Waveform waveform, double amplitude) {
@@ -113,14 +117,16 @@ public final class WaveformSoundEngine implements SoundEngine {
         }
 
         private void start() {
-            running = true;
+            releaseRequested = false;
+            releaseStartSample = -1;
+
             playbackThread = new Thread(this::play, "waveform-voice-" + inputNoteId);
             playbackThread.setDaemon(true);
             playbackThread.start();
         }
 
         private void stop() {
-            running = false;
+            releaseRequested = true;
         }
 
         private void play() {
@@ -139,7 +145,7 @@ public final class WaveformSoundEngine implements SoundEngine {
                 byte[] buffer = new byte[BUFFER_FRAMES * 2];
                 long sampleIndex = 0;
 
-                while (running) {
+                while (!isReleaseComplete(sampleIndex)) {
                     fillBuffer(buffer, sampleIndex);
                     line.write(buffer, 0, buffer.length);
                     sampleIndex += BUFFER_FRAMES;
@@ -153,13 +159,45 @@ public final class WaveformSoundEngine implements SoundEngine {
 
         private void fillBuffer(byte[] buffer, long startingSampleIndex) {
             for (int frame = 0; frame < BUFFER_FRAMES; frame++) {
-                double timeSeconds = (startingSampleIndex + frame) / SAMPLE_RATE;
-                double sample = sampleAt(timeSeconds) * amplitude;
+                long absoluteSampleIndex = startingSampleIndex + frame;
+                double timeSeconds = absoluteSampleIndex / SAMPLE_RATE;
+                double envelope = envelopeAt(absoluteSampleIndex);
+                double sample = sampleAt(timeSeconds) * amplitude * envelope;
                 short pcmSample = (short) (sample * Short.MAX_VALUE);
 
                 buffer[frame * 2] = (byte) (pcmSample & 0xff);
                 buffer[frame * 2 + 1] = (byte) ((pcmSample >> 8) & 0xff);
             }
+        }
+
+        private double envelopeAt(long sampleIndex) {
+            double attackSamples = ATTACK_SECONDS * SAMPLE_RATE;
+
+            if (sampleIndex < attackSamples) {
+                return sampleIndex / attackSamples;
+            }
+
+            if (!releaseRequested) {
+                return 1.0;
+            }
+
+            if (releaseStartSample < 0) {
+                releaseStartSample = sampleIndex;
+            }
+
+            double releaseSamples = RELEASE_SECONDS * SAMPLE_RATE;
+            double releaseProgress = (sampleIndex - releaseStartSample) / releaseSamples;
+
+            return Math.max(0.0, 1.0 - releaseProgress);
+        }
+
+        private boolean isReleaseComplete(long sampleIndex) {
+            if (!releaseRequested || releaseStartSample < 0) {
+                return false;
+            }
+
+            double releaseSamples = RELEASE_SECONDS * SAMPLE_RATE;
+            return sampleIndex - releaseStartSample >= releaseSamples;
         }
 
         private double sampleAt(double timeSeconds) {
