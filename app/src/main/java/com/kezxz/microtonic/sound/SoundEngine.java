@@ -5,11 +5,10 @@ import com.kezxz.microtonic.tuning.TunedNote;
 /**
  * playback engine used by the app
  *
- * desktop MIDI, future waveform synthesis, web audio, and mobile audio can each
- * provide their own implementation behind this interface
+ * each platform can provide its own implementation
  */
 public interface SoundEngine extends AutoCloseable {
-    
+
     void playTestNote(int inputNoteId, int noteIndex, TunedNote tunedNote);
 
     void noteOn(int inputNoteId, int noteIndex, TunedNote tunedNote, int velocity);

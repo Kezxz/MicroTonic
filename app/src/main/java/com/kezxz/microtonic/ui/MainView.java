@@ -65,6 +65,9 @@ public final class MainView implements AutoCloseable {
         this.appState.soundSourceProperty().addListener((observable, oldValue, newValue) ->
                 panicAllNotesOff()
         );
+        this.appState.inputModeProperty().addListener((observable, oldValue, newValue) ->
+        panicAllNotesOff()
+        );
         this.midiSoundEngine.setInstrumentByName(appState.getInstrument());
     }
 

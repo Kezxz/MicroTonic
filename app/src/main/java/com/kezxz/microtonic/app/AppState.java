@@ -1,10 +1,10 @@
 package com.kezxz.microtonic.app;
 
-import com.kezxz.microtonic.sound.GeneralMidiInstruments;
-import com.kezxz.microtonic.sound.Waveform;
-import com.kezxz.microtonic.sound.SoundSource;
-import com.kezxz.microtonic.tuning.TuningSystem;
 import com.kezxz.microtonic.input.InputMode;
+import com.kezxz.microtonic.sound.GeneralMidiInstruments;
+import com.kezxz.microtonic.sound.SoundSource;
+import com.kezxz.microtonic.sound.Waveform;
+import com.kezxz.microtonic.tuning.TuningSystem;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;

@@ -1,9 +1,9 @@
 package com.kezxz.microtonic.tuning;
 
 import com.kezxz.microtonic.app.AppState;
-import com.kezxz.microtonic.tuning.strategies.NTETStrategy;
 import com.kezxz.microtonic.tuning.strategies.JustIntonationChromaticStrategy;
 import com.kezxz.microtonic.tuning.strategies.MeantoneStrategy;
+import com.kezxz.microtonic.tuning.strategies.NTETStrategy;
 import com.kezxz.microtonic.tuning.strategies.PythagoreanStrategy;
 import com.kezxz.microtonic.tuning.strategies.TwelveTETStrategy;
 import com.kezxz.microtonic.util.MusicMath;

@@ -9,10 +9,15 @@ import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-// waveform SoundEngine backed by Java sampled audio.
+/**
+ * SoundEngine implementation backed by Java sampled audio
+ *
+ * uses one lightweight playback thread per active synth voice
+ */
 public final class WaveformSoundEngine implements SoundEngine {
 
     private static final float SAMPLE_RATE = 44_100.0f;
@@ -83,8 +88,7 @@ public final class WaveformSoundEngine implements SoundEngine {
     }
 
     @Override
-    public void setInstrumentByName(String displayName) {
-        // Waveform synthesis does not use General MIDI instruments.
+    public void setInstrumentByName(String displayName) { // waveform synthesis does not use General MIDI instruments
     }
 
     @Override

@@ -6,7 +6,7 @@ import com.kezxz.microtonic.sound.synth.WaveformSoundEngine;
 
 // creates current desktop sound engine
 public final class SoundEngineFactory {
-    
+
     private SoundEngineFactory() {
     }
 
