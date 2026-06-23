@@ -45,6 +45,7 @@ public final class MainView implements AutoCloseable {
     private final Set<KeyCode> activeComputerKeys = new HashSet<>();
 
     private final CurrentNotePane currentNotePane;
+    private final UtilityPane utilityPane;
 
     public MainView(AppState appState) {
         this.appState = appState;
@@ -54,6 +55,7 @@ public final class MainView implements AutoCloseable {
         this.midiDeviceService = new MidiDeviceService();
         this.midiInputProvider = new MidiInputProvider();
         this.currentNotePane = new CurrentNotePane();
+        this.utilityPane = new UtilityPane(this::panicAllNotesOff);
         this.appState.instrumentProperty().addListener((observable, oldValue, newValue) ->
                 midiSoundEngine.setInstrumentByName(newValue)
         );
@@ -118,7 +120,7 @@ public final class MainView implements AutoCloseable {
         TitledPane debugPane = createTuningDebugPane();
         TitledPane liveFeedbackPane = currentNotePane.build();
         TitledPane midiDevicesPane = createMidiDevicesPane();
-        TitledPane utilityPane = createUtilityPane();
+        TitledPane utilityPane = this.utilityPane.build();
 
         Label statusLabel = new Label("Try out some different intonations. Play notes to see the live feedback!");
         statusLabel.getStyleClass().add("status-label");
@@ -296,34 +298,6 @@ public final class MainView implements AutoCloseable {
         midiDevicesPane.setCollapsible(false);
 
         return midiDevicesPane;
-    }
-
-// ----------- UTILITY PANE ---------- //
-
-    private TitledPane createUtilityPane() {
-        GridPane utilityGrid = new GridPane();
-        utilityGrid.setHgap(12);
-        utilityGrid.setVgap(12);
-        utilityGrid.setPadding(new Insets(16));
-
-        Button panicButton = createPanicButton();
-
-        Label helpLabel = new Label("Use this if notes get stuck or MIDI behaves unexpectedly.");
-
-        utilityGrid.add(panicButton, 0, 0);
-        utilityGrid.add(helpLabel, 1, 0);
-
-        TitledPane utilityPane = new TitledPane("Utilities", utilityGrid);
-        utilityPane.setCollapsible(true);
-        utilityPane.setExpanded(false);
-
-        return utilityPane;
-    }
-
-    private Button createPanicButton() {
-        Button panicButton = new Button("Panic / All Notes Off");
-        panicButton.setOnAction(event -> panicAllNotesOff());
-        return panicButton;
     }
 
 // ----------- ADVANCED DEBUG PANE ----------- //
