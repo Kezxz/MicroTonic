@@ -14,7 +14,6 @@ import com.kezxz.microtonic.sound.SoundSource;
 import com.kezxz.microtonic.sound.SoundEngine;
 import com.kezxz.microtonic.sound.SoundEngineFactory;
 
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
@@ -45,12 +44,7 @@ public final class MainView implements AutoCloseable {
     private final MidiInputProvider midiInputProvider;
     private final Set<KeyCode> activeComputerKeys = new HashSet<>();
 
-    private final Label liveSourceLabel = new Label("Source: —");
-    private final Label liveNoteIndexLabel = new Label("Note Index: —");
-    private final Label liveFrequencyLabel = new Label("Frequency: —");
-    private final Label liveMidiLabel = new Label("Nearest MIDI Note: —");
-    private final Label liveCentsLabel = new Label("Cents Deviation: —");
-    private final Label liveNameLabel = new Label("Name: —");
+    private final CurrentNotePane currentNotePane;
 
     public MainView(AppState appState) {
         this.appState = appState;
@@ -59,6 +53,7 @@ public final class MainView implements AutoCloseable {
         this.waveformSoundEngine = SoundEngineFactory.createWaveform(appState);
         this.midiDeviceService = new MidiDeviceService();
         this.midiInputProvider = new MidiInputProvider();
+        this.currentNotePane = new CurrentNotePane();
         this.appState.instrumentProperty().addListener((observable, oldValue, newValue) ->
                 midiSoundEngine.setInstrumentByName(newValue)
         );
@@ -121,7 +116,7 @@ public final class MainView implements AutoCloseable {
         controlsPane.setCollapsible(false);
 
         TitledPane debugPane = createTuningDebugPane();
-        TitledPane liveFeedbackPane = createLiveFeedbackPane();
+        TitledPane liveFeedbackPane = currentNotePane.build();
         TitledPane midiDevicesPane = createMidiDevicesPane();
         TitledPane utilityPane = createUtilityPane();
 
@@ -211,43 +206,8 @@ public final class MainView implements AutoCloseable {
 
 // ----------- CURRENT NOTE / LIVE FEEDBACK UPDATE ----------- //
 
-    private TitledPane createLiveFeedbackPane() {
-        GridPane feedbackGrid = new GridPane();
-        feedbackGrid.setHgap(12);
-        feedbackGrid.setVgap(8);
-        feedbackGrid.setPadding(new Insets(16));
-
-        feedbackGrid.add(liveSourceLabel, 0, 0);
-        feedbackGrid.add(liveNoteIndexLabel,0, 1);
-        feedbackGrid.add(liveFrequencyLabel, 0, 2);
-        feedbackGrid.add(liveMidiLabel, 0, 3);
-        feedbackGrid.add(liveCentsLabel, 0, 4);
-        feedbackGrid.add(liveNameLabel, 0, 5);
-
-        TitledPane feedbackPane = new TitledPane("Current Note", feedbackGrid);
-        feedbackPane.setCollapsible(false);
-
-        return feedbackPane;
-    }
-
     private void updateLiveFeedback(String source, int noteIndex, TunedNote tunedNote) {
-        Runnable update = () -> {
-            liveSourceLabel.setText("Source: " + source);
-            liveNoteIndexLabel.setText("Note Index: " + noteIndex);
-            liveFrequencyLabel.setText(String.format("Frequency: %.3f Hz", tunedNote.frequencyHz()));
-            liveMidiLabel.setText("Nearest MIDI Note: " + tunedNote.nearestMidiNote());
-            liveCentsLabel.setText(String.format(
-                        "Cents Deviation: %.3f",
-                        tunedNote.centsDeviationFromNearest12Tet()
-            ));
-            liveNameLabel.setText("Name: " + tunedNote.displayName());
-        };
-
-        if (Platform.isFxApplicationThread()) {
-            update.run();
-        } else {
-            Platform.runLater(update);
-        }
+        currentNotePane.update(source, noteIndex, tunedNote);
     }
 
 // ----------- MIDI SETUP PANE ----------- //
