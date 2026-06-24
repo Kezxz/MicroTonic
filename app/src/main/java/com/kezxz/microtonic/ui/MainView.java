@@ -7,9 +7,6 @@ import com.kezxz.microtonic.input.MidiInputProvider;
 import com.kezxz.microtonic.input.InputMode;
 import com.kezxz.microtonic.tuning.TunedNote;
 import com.kezxz.microtonic.tuning.TuningEngine;
-import com.kezxz.microtonic.tuning.TuningSystem;
-import com.kezxz.microtonic.sound.GeneralMidiInstruments;
-import com.kezxz.microtonic.sound.Waveform;
 import com.kezxz.microtonic.sound.SoundSource;
 import com.kezxz.microtonic.sound.SoundEngine;
 import com.kezxz.microtonic.sound.SoundEngineFactory;
@@ -22,9 +19,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.Spinner;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TitledPane;
 import javafx.scene.control.TextInputControl;
@@ -44,6 +39,7 @@ public final class MainView implements AutoCloseable {
     private final MidiInputProvider midiInputProvider;
     private final Set<KeyCode> activeComputerKeys = new HashSet<>();
 
+    private final MainControlsPane mainControlsPane;
     private final CurrentNotePane currentNotePane;
     private final UtilityPane utilityPane;
     private final AdvancedTuningDebugPane advancedTuningDebugPane;
@@ -55,6 +51,7 @@ public final class MainView implements AutoCloseable {
         this.waveformSoundEngine = SoundEngineFactory.createWaveform(appState);
         this.midiDeviceService = new MidiDeviceService();
         this.midiInputProvider = new MidiInputProvider();
+        this.mainControlsPane = new MainControlsPane(appState);
         this.currentNotePane = new CurrentNotePane();
         this.utilityPane = new UtilityPane(this::panicAllNotesOff);
         this.advancedTuningDebugPane = new AdvancedTuningDebugPane(
@@ -82,46 +79,7 @@ public final class MainView implements AutoCloseable {
         Label subtitle = new Label("Microtonal tuning sketchpad");
         subtitle.getStyleClass().add("app-subtitle");
 
-        ComboBox<String> tuningSystemBox = createTuningSystemBox();
-        ComboBox<String> tonicBox = createTonicBox();
-        Spinner<Integer> divisionsSpinner = createDivisionsSpinner();
-        ComboBox<String> instrumentBox = createInstrumentBox();
-        ComboBox<String> soundSourceBox = createSoundSourceBox();
-        ComboBox<String> inputModeBox = createInputModeBox();
-        ComboBox<String> waveformBox = createWaveformBox();
-
-        bindContextualControlState(divisionsSpinner, instrumentBox, waveformBox);
-
-        GridPane controlsGrid = new GridPane();
-        controlsGrid.setHgap(12);
-        controlsGrid.setVgap(12);
-        controlsGrid.setPadding(new Insets(16));
-
-        controlsGrid.add(new Label("Tuning System"), 0, 0);
-        controlsGrid.add(tuningSystemBox, 1, 0);
-
-        controlsGrid.add(new Label("Tonic"), 0, 1);
-        controlsGrid.add(tonicBox, 1, 1);
-
-        controlsGrid.add(new Label("N-TET Divisions"), 0, 2);
-        controlsGrid.add(divisionsSpinner, 1, 2);
-
-        controlsGrid.add(new Label("Instrument"), 0, 3);
-        controlsGrid.add(instrumentBox, 1, 3);
-
-        controlsGrid.add(new Label("Sound Source"), 0, 4);
-        controlsGrid.add(soundSourceBox, 1, 4);
-
-        controlsGrid.add(new Label("Input Mode"), 0, 5);
-        controlsGrid.add(inputModeBox, 1, 5);
-
-        controlsGrid.add(new Label("Waveform"), 0, 6);
-        controlsGrid.add(waveformBox, 1, 6);
-
-        // groups main controls in a titled section
-        TitledPane controlsPane = new TitledPane("Main Controls", controlsGrid);
-        controlsPane.setCollapsible(false);
-
+        TitledPane controlsPane = mainControlsPane.build();
         TitledPane debugPane = advancedTuningDebugPane.build();
         TitledPane liveFeedbackPane = currentNotePane.build();
         TitledPane midiDevicesPane = createMidiDevicesPane();
@@ -145,70 +103,6 @@ public final class MainView implements AutoCloseable {
         content.minHeightProperty().bind(scrollPane.viewportBoundsProperty().map(bounds -> bounds.getHeight()));
 
         return scrollPane;
-    }
-
-// ----------- MAIN CONTROLS PANE ----------- //
-
-    private ComboBox<String> createTuningSystemBox() {
-        ComboBox<String> box = new ComboBox<>();
-        box.getItems().addAll(TuningSystem.displayNames());
-
-        box.valueProperty().bindBidirectional(appState.tuningSystemProperty());
-        return box;
-    }
-
-    private ComboBox<String> createTonicBox() {
-        ComboBox<String> box = new ComboBox<>();
-        box.getItems().addAll(
-                "C", "C#/Db", "D", "D#/Eb", "E", "F",
-                "F#/Gb", "G", "G#/Ab", "A", "A#/Bb", "B"
-        );
-        box.valueProperty().bindBidirectional(appState.tonicProperty());
-        return box;
-    }
-
-    // N-TET divisions....min = 2, max = 72
-    private Spinner<Integer> createDivisionsSpinner() {
-        Spinner<Integer> spinner = new Spinner<>(2, 72, appState.getNTetDivisions());
-        spinner.setEditable(true);
-
-        appState.nTetDivisionsProperty().bind(spinner.valueProperty());
-
-        return spinner;
-    }
-
-    private ComboBox<String> createInstrumentBox() {
-        ComboBox<String> box = new ComboBox<>();
-        box.getItems().addAll(GeneralMidiInstruments.displayNames());
-
-        box.valueProperty().bindBidirectional(appState.instrumentProperty());
-
-        return box;
-    }
-
-    private ComboBox<String> createSoundSourceBox() {
-        ComboBox<String> box = new ComboBox<>();
-        box.getItems().addAll(SoundSource.displayNames());
-
-        box.valueProperty().bindBidirectional(appState.soundSourceProperty());
-
-        return box;
-    }
-
-    private ComboBox<String> createInputModeBox() {
-        ComboBox<String> box = new ComboBox<>();
-        box.getItems().addAll(InputMode.displayNames());
-
-        box.valueProperty().bindBidirectional(appState.inputModeProperty());
-        return box;
-    }
-
-    private ComboBox<String> createWaveformBox() {
-        ComboBox<String> box = new ComboBox<>();
-        box.getItems().addAll(Waveform.displayNames());
-
-        box.valueProperty().bindBidirectional(appState.waveformProperty());
-        return box;
     }
 
 // ----------- CURRENT NOTE / LIVE FEEDBACK UPDATE ----------- //
@@ -389,24 +283,6 @@ public void handleKeyPressed(KeyEvent event) {
         selectedSoundEngine().noteOff(midiNote);
     }
 
-    private void bindContextualControlState(
-            Spinner<Integer> divisionsSpinner,
-            ComboBox<String> instrumentBox,
-            ComboBox<String> waveformBox
-    ) {
-        divisionsSpinner.disableProperty().bind(
-                appState.tuningSystemProperty().map(tuningSystem -> !isNtetSelected())
-        );
-
-        instrumentBox.disableProperty().bind(
-                appState.soundSourceProperty().map(soundSource -> !isGeneralMidiSelected())
-        );
-
-        waveformBox.disableProperty().bind(
-                appState.soundSourceProperty().map(soundSource -> !isSynthWaveformSelected())
-        );
-    }
-
 // ----------- INPUT MODE HANDLERS ------------ //
 
     // avoids playing notes while the user is typing into editable controls
@@ -430,19 +306,6 @@ public void handleKeyPressed(KeyEvent event) {
     return midiSoundEngine;
     }
 
-// ----------- UI HELPERS ----------- //
-
-    private boolean isNtetSelected() {
-        return TuningSystem.fromDisplayName(appState.getTuningSystem()) == TuningSystem.N_TET;
-    }
-
-    private boolean isGeneralMidiSelected() {
-        return SoundSource.fromDisplayName(appState.getSoundSource()) == SoundSource.GENERAL_MIDI;
-    }
-
-    private boolean isSynthWaveformSelected() {
-        return SoundSource.fromDisplayName(appState.getSoundSource()) == SoundSource.SYNTH_WAVEFORM;
-    }
 // ----------- PLAYBACK / MIDI SAFETY ACTIONS ----------- //
 
     private void playDebugNote(AdvancedTuningDebugPane.DebugNote debugNote) {
