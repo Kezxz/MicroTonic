@@ -46,6 +46,7 @@ public final class MainView implements AutoCloseable {
 
     private final CurrentNotePane currentNotePane;
     private final UtilityPane utilityPane;
+    private final AdvancedTuningDebugPane advancedTuningDebugPane;
 
     public MainView(AppState appState) {
         this.appState = appState;
@@ -56,6 +57,10 @@ public final class MainView implements AutoCloseable {
         this.midiInputProvider = new MidiInputProvider();
         this.currentNotePane = new CurrentNotePane();
         this.utilityPane = new UtilityPane(this::panicAllNotesOff);
+        this.advancedTuningDebugPane = new AdvancedTuningDebugPane(
+            tuningEngine::resolve,
+            this::playDebugNote
+        );
         this.appState.instrumentProperty().addListener((observable, oldValue, newValue) ->
                 midiSoundEngine.setInstrumentByName(newValue)
         );
@@ -117,7 +122,7 @@ public final class MainView implements AutoCloseable {
         TitledPane controlsPane = new TitledPane("Main Controls", controlsGrid);
         controlsPane.setCollapsible(false);
 
-        TitledPane debugPane = createTuningDebugPane();
+        TitledPane debugPane = advancedTuningDebugPane.build();
         TitledPane liveFeedbackPane = currentNotePane.build();
         TitledPane midiDevicesPane = createMidiDevicesPane();
         TitledPane utilityPane = this.utilityPane.build();
@@ -300,72 +305,6 @@ public final class MainView implements AutoCloseable {
         return midiDevicesPane;
     }
 
-// ----------- ADVANCED DEBUG PANE ----------- //
-
-    private TitledPane createTuningDebugPane() {
-        Spinner<Integer> noteIndexSpinner = new Spinner<>(-48, 48, 0);
-        noteIndexSpinner.setEditable(true);
-
-        Button resolveButton = new Button("Resolve Note");
-        Button playButton = new Button("Play Test Note");
-
-        Label frequencyLabel = new Label("Frequency: —");
-        Label midiLabel = new Label("Nearest MIDI Note: —");
-        Label centsLabel = new Label("Cents Deviation: —");
-        Label nameLabel = new Label("Name: —");
-
-        resolveButton.setOnAction(event -> {
-            int noteIndex = noteIndexSpinner.getValue();
-            TunedNote tunedNote = tuningEngine.resolve(noteIndex);
-
-            frequencyLabel.setText(String.format("Frequency: %.3f Hz", tunedNote.frequencyHz()));
-            midiLabel.setText("Nearest MIDI Note: " + tunedNote.nearestMidiNote());
-            centsLabel.setText(String.format(
-                    "Cents Deviation: %.3f",
-                    tunedNote.centsDeviationFromNearest12Tet()
-            ));
-            nameLabel.setText("Name: " + tunedNote.displayName());
-        });
-
-        playButton.setOnAction(event -> {
-            int noteIndex = noteIndexSpinner.getValue();
-            TunedNote tunedNote = tuningEngine.resolve(noteIndex);
-
-            frequencyLabel.setText(String.format("Frequency: %.3f Hz", tunedNote.frequencyHz()));
-            midiLabel.setText("Nearest MIDI Note: " + tunedNote.nearestMidiNote());
-            centsLabel.setText(String.format(
-                    "Cents Deviation: %.3f",
-                    tunedNote.centsDeviationFromNearest12Tet()
-            ));
-            nameLabel.setText("Name: " + tunedNote.displayName());
-
-            selectedSoundEngine().playTestNote(noteIndex, noteIndex, tunedNote);
-            updateLiveFeedback("Debug Test Note", noteIndex, tunedNote);
-        });
-
-        GridPane debugGrid = new GridPane();
-        debugGrid.setHgap(12);
-        debugGrid.setVgap(12);
-        debugGrid.setPadding(new Insets(16));
-
-        debugGrid.add(new Label("Note Index"), 0, 0);
-        debugGrid.add(noteIndexSpinner, 1, 0);
-        debugGrid.add(resolveButton, 2, 0);
-        debugGrid.add(playButton, 3, 0);
-
-        debugGrid.add(frequencyLabel, 0, 1, 4, 1);
-        debugGrid.add(midiLabel, 0, 2, 4, 1);
-        debugGrid.add(centsLabel, 0, 3, 4, 1);
-        debugGrid.add(nameLabel, 0, 4, 4, 1);
-
-        TitledPane debugPane = new TitledPane("Advanced Tuning Debug", debugGrid);
-        debugPane.setCollapsible(true);
-        debugPane.setExpanded(false);
-
-        return debugPane;
-    }
-
-
 // ----------- INPUT EVENT HANDLERS ----------- //
 
 public void handleKeyPressed(KeyEvent event) {
@@ -505,6 +444,16 @@ public void handleKeyPressed(KeyEvent event) {
         return SoundSource.fromDisplayName(appState.getSoundSource()) == SoundSource.SYNTH_WAVEFORM;
     }
 // ----------- PLAYBACK / MIDI SAFETY ACTIONS ----------- //
+
+    private void playDebugNote(AdvancedTuningDebugPane.DebugNote debugNote) {
+        selectedSoundEngine().playTestNote(
+            debugNote.noteIndex(),
+            debugNote.noteIndex(),
+            debugNote.tunedNote()
+        );
+
+        updateLiveFeedback("Debug Test Note", debugNote.noteIndex(), debugNote.tunedNote());
+    }
 
     private void panicAllNotesOff() {
         activeComputerKeys.clear();
