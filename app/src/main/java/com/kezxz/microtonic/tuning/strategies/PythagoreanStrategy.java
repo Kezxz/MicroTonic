@@ -77,19 +77,9 @@ public final class PythagoreanStrategy implements TuningStrategy {
         return "Pythagorean";
     }
 
-    /**
-     * Resolves a note index using the Pythagorean ratio table.
-     *
-     * Examples:
-     * - noteIndex 0  = tonic ratio 1/1
-     * - noteIndex 2  = major second ratio 9/8
-     * - noteIndex 7  = perfect fifth ratio 3/2
-     * - noteIndex 12 = next octave tonic ratio 2/1
-     *
-     * floorDiv and floorMod make negative note indices behave musically.
-     */
     @Override
     public TunedNote resolve(int noteIndex, TuningContext context) {
+        // keeps negative note indices aligned to musical octaves
         int octaveOffset = Math.floorDiv(noteIndex, RATIOS.length);
         int scaleDegree = Math.floorMod(noteIndex, RATIOS.length);
 
@@ -97,6 +87,7 @@ public final class PythagoreanStrategy implements TuningStrategy {
         double ratio = RATIOS[scaleDegree] * octaveMultiplier;
         double frequencyHz = context.tonicFrequencyHz() * ratio;
 
+        // uses MIDI anchor for pitch-bending toward target frequency
         int nearestMidiNote = MusicMath.frequencyToNearestMidiNote(frequencyHz);
         double nearestMidiFrequency = MusicMath.midiNoteToFrequency(nearestMidiNote);
         double centsDeviation = MusicMath.centsBetween(frequencyHz, nearestMidiFrequency);
@@ -106,16 +97,18 @@ public final class PythagoreanStrategy implements TuningStrategy {
                 frequencyHz,
                 nearestMidiNote,
                 centsDeviation,
-                displayNameFor(noteIndex, scaleDegree, octaveOffset)
+                displayNameFor(scaleDegree, octaveOffset)
         );
     }
 
-    private String displayNameFor(int noteIndex, int scaleDegree, int octaveOffset) {
-        return "Pythagorean scale degree "
-                + noteIndex
-                + " -- "
-                + DEGREE_NAMES[scaleDegree]
-                + " -- octave "
-                + octaveOffset;
+    private String displayNameFor(int scaleDegree, int octaveOffset) {
+        int displayDegree = scaleDegree + 1;
+
+        return String.format(
+                "Pythagorean Intonation degree %d - %s - octave %d",
+                displayDegree,
+                DEGREE_NAMES[scaleDegree],
+                (octaveOffset + 1)
+        );
     }
 }

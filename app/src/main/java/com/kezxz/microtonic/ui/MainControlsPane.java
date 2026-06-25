@@ -73,28 +73,22 @@ public final class MainControlsPane {
             ComboBox<String> waveformBox
     ) {
         divisionsSpinner.disableProperty().bind(
-                appState.tuningSystemProperty().map(tuningSystem -> !isNTetSelected())
+                appState.tuningSystemProperty().map(
+                        tuningSystem -> TuningSystem.fromDisplayName(tuningSystem) != TuningSystem.N_TET
+                )
         );
 
         instrumentBox.disableProperty().bind(
-                appState.soundSourceProperty().map(soundSource -> !isGeneralMidiSelected())
+                appState.soundSourceProperty().map(
+                        soundSource -> SoundSource.fromDisplayName(soundSource) != SoundSource.GENERAL_MIDI
+                )
         );
 
         waveformBox.disableProperty().bind(
-                appState.soundSourceProperty().map(soundSource -> !isSynthWaveformSelected())
+                appState.soundSourceProperty().map(
+                        soundSource -> SoundSource.fromDisplayName(soundSource) != SoundSource.SYNTH_WAVEFORM
+                )
         );
-    }
-
-    private boolean isNTetSelected() {
-        return TuningSystem.fromDisplayName(appState.getTuningSystem()) == TuningSystem.N_TET;
-    }
-
-    private boolean isGeneralMidiSelected() {
-        return SoundSource.fromDisplayName(appState.getSoundSource()) == SoundSource.GENERAL_MIDI;
-    }
-
-    private boolean isSynthWaveformSelected() {
-        return SoundSource.fromDisplayName(appState.getSoundSource()) == SoundSource.SYNTH_WAVEFORM;
     }
 
     private ComboBox<String> createTuningSystemBox() {

@@ -13,6 +13,21 @@ import com.kezxz.microtonic.util.MusicMath;
  */
 public final class TwelveTETStrategy implements TuningStrategy {
 
+    private static final String[] INTERVAL_QUALITIES = {
+            "tonic",
+            "minor second",
+            "major second",
+            "minor third",
+            "major third",
+            "perfect fourth",
+            "tritone",
+            "perfect fifth",
+            "minor sixth",
+            "major sixth",
+            "minor seventh",
+            "major seventh"
+    };
+
     @Override
     public String id() {
         return "12-tet";
@@ -23,45 +38,39 @@ public final class TwelveTETStrategy implements TuningStrategy {
         return "12-TET";
     }
 
-    /**
-     * Resolves a note index using the formula:
-     *
-     * frequency = tonicFrequency * 2^(noteIndex / 12)
-     *
-     * Examples when tonic is C4:
-     * - noteIndex 0 = C4
-     * - noteIndex 12 = C5
-     * - noteIndex -12 = C3
-     */
     @Override
     public TunedNote resolve(int noteIndex, TuningContext context) {
         double frequencyHz = context.tonicFrequencyHz() * Math.pow(2.0, noteIndex / 12.0);
 
-        // Find the nearest standard MIDI note. For 12-TET this should usually
-        // be exactly the note we expect, with near-zero cents deviation.
+        // find nearest MIDI note
         int nearestMidiNote = MusicMath.frequencyToNearestMidiNote(frequencyHz);
 
-        // Convert that MIDI note back to its normal frequency so we can measure
-        // how far away the tuned frequency is.
+        // convert MIDI note to normal frequency to measure how far away the tuned frequency is
         double nearestMidiFrequency = MusicMath.midiNoteToFrequency(nearestMidiNote);
 
-        // In 12-TET this should be approximately zero, except for tiny floating
-        // point rounding differences.
+        // in 12-TET, should be 0
         double centsDeviation = MusicMath.centsBetween(frequencyHz, nearestMidiFrequency);
+
+        int octaveOffset = Math.floorDiv(noteIndex, INTERVAL_QUALITIES.length);
+        int scaleDegree = Math.floorMod(noteIndex, INTERVAL_QUALITIES.length);
 
         return new TunedNote(
                 noteIndex,
                 frequencyHz,
                 nearestMidiNote,
                 centsDeviation,
-                displayNameFor(noteIndex)
+                displayNameFor(scaleDegree, octaveOffset)
         );
     }
 
-    /**
-     * Simple label for debugging and future feedback display.
-     */
-    private String displayNameFor(int noteIndex) {
-        return "12-TET scale degree " + noteIndex;
+    private String displayNameFor(int scaleDegree, int octaveOffset) {
+        int displayDegree = scaleDegree + 1;
+
+        return String.format(
+            "12-Tet degree %d - %s - octave %d",
+            displayDegree,
+            INTERVAL_QUALITIES[scaleDegree],
+            (octaveOffset + 1)
+        );
     }
 }

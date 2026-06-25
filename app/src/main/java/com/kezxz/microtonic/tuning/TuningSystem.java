@@ -6,7 +6,7 @@ import java.util.List;
 // supported tuning systems shown in the main tuning dropdown
 public enum TuningSystem {
     TWELVE_TET("12-tet", "12-TET"),
-    JUST_INTONATION_CHROMATIC("ji-12-chromatic", "Just Intonation - 12-tone chromatic"),
+    JUST_INTONATION("just-intonation", "Just Intonation"),
     PYTHAGOREAN("pythagorean", "Pythagorean"),
     MEANTONE("meantone", "Meantone"),
     N_TET("n-tet", "N-TET");

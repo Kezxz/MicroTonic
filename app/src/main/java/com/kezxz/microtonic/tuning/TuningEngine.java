@@ -8,18 +8,7 @@ import com.kezxz.microtonic.tuning.strategies.PythagoreanStrategy;
 import com.kezxz.microtonic.tuning.strategies.TwelveTETStrategy;
 import com.kezxz.microtonic.util.MusicMath;
 
-/**
- * Central tuning coordinator.
- *
- * This class connects the app's current settings to the correct tuning strategy.
- *
- * The rest of the app should eventually ask this class:
- *
- * "Given this note index, what exact tuned note should I play?"
- *
- * This keeps UI code and sound code from needing to know details about each
- * individual tuning system.
- */
+// connects the app's current settings to the correct tuning strategy
 public final class TuningEngine {
 
     private final AppState appState;
@@ -35,11 +24,11 @@ public final class TuningEngine {
     }
 
     /**
-     * Resolves a logical note index into a tuned note.
+     * resolves a logical note index into a tuned note
      *
-     * Example:
+     * example:
      * - noteIndex 0 means the selected tonic
-     * - noteIndex 1 means the next step in the active tuning system
+     * - noteIndex 1 means the next step (semitone) in the active tuning system
      * - noteIndex 12 often means one octave above the tonic, depending on tuning
      */
     public TunedNote resolve(int noteIndex) {
@@ -49,16 +38,8 @@ public final class TuningEngine {
         return strategy.resolve(noteIndex, context);
     }
 
-    /**
-     * Creates a TuningContext from current UI/app settings.
-     *
-     * The tonic frequency is currently anchored around C4.
-     *
-     * Example:
-     * - C tonic = C4
-     * - D tonic = D4
-     * - A tonic = A4-ish relative to C4's octave
-     */
+    // creates a TuningContext from current UI/app settings
+    // though this can be used on a MIDI controller, it's mainly meant for computer keyboard input
     private TuningContext createContextFromAppState() {
         PitchClass tonic = PitchClass.fromDisplayName(appState.getTonic());
 
@@ -72,16 +53,13 @@ public final class TuningEngine {
         );
     }
 
-    /**
-     * Chooses a tuning strategy from the current tuning-system dropdown value.
-     */
     private TuningStrategy selectStrategy() {
         TuningSystem tuningSystem = TuningSystem.fromDisplayName(appState.getTuningSystem());
 
         return switch (tuningSystem) {
             case TWELVE_TET -> twelveTETStrategy;
             case N_TET -> nTetStrategy;
-            case JUST_INTONATION_CHROMATIC -> justIntonationStrategy;
+            case JUST_INTONATION -> justIntonationStrategy;
             case PYTHAGOREAN -> pythagoreanStrategy;
             case MEANTONE -> meantoneStrategy;
             default -> twelveTETStrategy;

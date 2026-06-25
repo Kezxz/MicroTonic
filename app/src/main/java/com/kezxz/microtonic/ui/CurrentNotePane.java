@@ -3,11 +3,10 @@ package com.kezxz.microtonic.ui;
 import com.kezxz.microtonic.tuning.TunedNote;
 
 import javafx.application.Platform;
+import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.GridPane;
-
-import javafx.geometry.Insets;
 
 // shows the most recently played or resolved note
 public final class CurrentNotePane {

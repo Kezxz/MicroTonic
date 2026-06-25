@@ -6,40 +6,14 @@ import com.kezxz.microtonic.tuning.TuningStrategy;
 import com.kezxz.microtonic.util.MusicMath;
 
 /**
- * 12-tone quarter-comma meantone tuning strategy.
+ * 12-tone quarter-comma meantone tuning strategy
  *
- * Meantone temperament narrows fifths slightly so that major thirds are closer
- * to pure Just Intonation thirds.
- *
- * This MVP version uses a fixed 12-tone cents table ordered from the selected
- * tonic. That keeps the implementation simple and easy to test.
- *
- * Important:
- * - This is a practical MVP meantone map.
- * - Enharmonic spellings are simplified for now.
- * - Later, we can add configurable comma sizes or spelling-aware variants.
+ * meantone temperament narrows fifths slightly so that major thirds are closer
+ * to pure Just Intonation thirds
  */
 public final class MeantoneStrategy implements TuningStrategy {
 
-    /**
-     * Quarter-comma meantone cents table ordered by chromatic scale degree.
-     *
-     * These values are cents above the tonic within one octave.
-     *
-     * Scale degree:
-     * 0  = tonic
-     * 1  = minor second
-     * 2  = major second
-     * 3  = minor third
-     * 4  = major third
-     * 5  = perfect fourth
-     * 6  = tritone
-     * 7  = perfect fifth
-     * 8  = minor sixth
-     * 9  = major sixth
-     * 10 = minor seventh
-     * 11 = major seventh
-     */
+    // cents above tonic
     private static final double[] CENTS = {
             0.000,
             76.049,
@@ -80,19 +54,9 @@ public final class MeantoneStrategy implements TuningStrategy {
         return "Meantone";
     }
 
-    /**
-     * Resolves a note index using the quarter-comma meantone cents table.
-     *
-     * Examples:
-     * - noteIndex 0  = tonic, 0 cents
-     * - noteIndex 4  = major third, about 386.314 cents
-     * - noteIndex 7  = perfect fifth, about 696.578 cents
-     * - noteIndex 12 = next octave tonic, 1200 cents
-     *
-     * floorDiv and floorMod make negative note indices behave musically.
-     */
     @Override
     public TunedNote resolve(int noteIndex, TuningContext context) {
+        // keeps begative indices aligned to musical octaves
         int octaveOffset = Math.floorDiv(noteIndex, CENTS.length);
         int scaleDegree = Math.floorMod(noteIndex, CENTS.length);
 
@@ -100,6 +64,7 @@ public final class MeantoneStrategy implements TuningStrategy {
         double ratio = MusicMath.centsToRatio(centsFromTonic);
         double frequencyHz = context.tonicFrequencyHz() * ratio;
 
+        // uses MIDI anchor for pitch-bending toward target frequency
         int nearestMidiNote = MusicMath.frequencyToNearestMidiNote(frequencyHz);
         double nearestMidiFrequency = MusicMath.midiNoteToFrequency(nearestMidiNote);
         double centsDeviation = MusicMath.centsBetween(frequencyHz, nearestMidiFrequency);
@@ -109,24 +74,23 @@ public final class MeantoneStrategy implements TuningStrategy {
                 frequencyHz,
                 nearestMidiNote,
                 centsDeviation,
-                displayNameFor(noteIndex, scaleDegree, octaveOffset, centsFromTonic)
+                displayNameFor(scaleDegree, octaveOffset, centsFromTonic)
         );
     }
 
     private String displayNameFor(
-            int noteIndex,
             int scaleDegree,
             int octaveOffset,
             double centsFromTonic
     ) {
-        return "Meantone scale degree "
-                + noteIndex
-                + " -- "
-                + DEGREE_NAMES[scaleDegree]
-                + " -- octave "
-                + octaveOffset
-                + " ("
-                + String.format("%.3f", centsFromTonic)
-                + " cents above tonic)";
+        int displayDegree = scaleDegree + 1;
+
+        return String.format(
+                "Meantone degree %d - %s - octave %d - %.3f cents",
+                displayDegree,
+                DEGREE_NAMES[scaleDegree],
+                (octaveOffset + 1),
+                centsFromTonic
+        );
     }
 }

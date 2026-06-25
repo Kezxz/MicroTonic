@@ -17,6 +17,21 @@ import com.kezxz.microtonic.util.MusicMath;
  */
 public final class NTETStrategy implements TuningStrategy {
 
+    private static final String[] TWELVE_TET_INTERVAL_NAMES = {
+        "tonic",
+        "m2",
+        "M2",
+        "m3",
+        "M3",
+        "P4",
+        "tritone",
+        "P5",
+        "m6",
+        "M6",
+        "m7",
+        "M7"
+    };
+
     @Override
     public String id() {
         return "n-tet";
@@ -40,9 +55,7 @@ public final class NTETStrategy implements TuningStrategy {
 
         double frequencyHz = context.tonicFrequencyHz() * Math.pow(2.0, noteIndex / (double) divisions);
 
-        // Even though N-TET may not line up with standard MIDI notes, we still
-        // find the nearest MIDI note so the future MIDI sound engine can pitch
-        // bend from that note to the target frequency.
+        // used as the MIDI anchor for pitch-bending toward the target frequency
         int nearestMidiNote = MusicMath.frequencyToNearestMidiNote(frequencyHz);
 
         double nearestMidiFrequency = MusicMath.midiNoteToFrequency(nearestMidiNote);
@@ -57,10 +70,27 @@ public final class NTETStrategy implements TuningStrategy {
         );
     }
 
-    /**
-     * Simple label for debugging and future feedback display.
-     */
     private String displayNameFor(int noteIndex, int divisions) {
-        return divisions + "-TET scale degree -- " + noteIndex;
+        int scaleDegree = Math.floorMod(noteIndex, divisions);
+
+        double twelveTetEquivalent = scaleDegree * 12.0 / divisions;
+        int nearestTwelveTetDegree = (int) Math.round(twelveTetEquivalent);
+        double centsDeviationFromNearestTwelveTet = (twelveTetEquivalent - nearestTwelveTetDegree) * 100.0;
+
+        return String.format(
+                "%d-TET Degree %d - near %s (%+.1f cents)",
+                divisions,
+                scaleDegree + 1,
+                nearestTwelveTetIntervalName(noteIndex, divisions),
+                centsDeviationFromNearestTwelveTet
+        );
+    }
+
+    private String nearestTwelveTetIntervalName(int noteIndex, int divisions) {
+        int nTetDegree = Math.floorMod(noteIndex, divisions);
+        double twelveTetEquivalent = nTetDegree * 12.0 / divisions;
+        int nearestTwelveTetDegree = Math.floorMod((int) Math.round(twelveTetEquivalent), 12);
+
+        return TWELVE_TET_INTERVAL_NAMES[nearestTwelveTetDegree];
     }
 }
