@@ -3,9 +3,7 @@ package com.kezxz.microtonic.sound;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * oscillator waveforms available in the waveform dropdown
- */
+// oscillator waveforms available in the waveform dropdown
 public enum Waveform {
     SINE("Sine"),
     SQUARE("Square"),

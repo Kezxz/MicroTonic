@@ -7,12 +7,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/**
- * Tests for the Pythagorean tuning strategy.
- *
- * These tests verify that important note indices resolve to the expected
- * Pythagorean frequency ratios.
- */
 class PythagoreanStrategyTest {
 
     private static final double TOLERANCE = 0.000001;

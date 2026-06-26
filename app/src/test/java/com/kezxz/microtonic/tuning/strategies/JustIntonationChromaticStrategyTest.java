@@ -7,12 +7,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/**
- * Tests for the 12-tone chromatic Just Intonation strategy.
- *
- * These tests focus on the most important thing:
- * note index -> correct frequency ratio.
- */
 class JustIntonationChromaticStrategyTest {
 
     private static final double TOLERANCE = 0.000001;

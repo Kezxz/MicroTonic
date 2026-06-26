@@ -8,7 +8,7 @@ import com.kezxz.microtonic.tuning.strategies.PythagoreanStrategy;
 import com.kezxz.microtonic.tuning.strategies.TwelveTETStrategy;
 import com.kezxz.microtonic.util.MusicMath;
 
-// connects the app's current settings to the correct tuning strategy
+// connects the app's current settings to the active tuning strategy
 public final class TuningEngine {
 
     private final AppState appState;
@@ -23,14 +23,7 @@ public final class TuningEngine {
         this.appState = appState;
     }
 
-    /**
-     * resolves a logical note index into a tuned note
-     *
-     * example:
-     * - noteIndex 0 means the selected tonic
-     * - noteIndex 1 means the next step (semitone) in the active tuning system
-     * - noteIndex 12 often means one octave above the tonic, depending on tuning
-     */
+    // resolves a logical note index into a tuned note
     public TunedNote resolve(int noteIndex) {
         TuningContext context = createContextFromAppState();
         TuningStrategy strategy = selectStrategy();

@@ -6,18 +6,10 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * Finds MIDI input devices connected to the computer.
- */
+// finds MIDI devices than can be shown as input options
 public final class MidiDeviceService {
 
-    /**
-     * Returns all available MIDI input devices.
-     * 
-     * In Java Sound terms:
-     * - getMaxTransmitters() != 0 means the device can send MIDI data out to the application.
-     * - getMaxTransmitters() == -1 means unlimited transmitters.
-     */
+    // returns all available MIDI input devices
     public List<MidiInputDeviceInfo> listInputDevices() {
         List<MidiInputDeviceInfo> devices = new ArrayList<>();
 
@@ -32,9 +24,6 @@ public final class MidiDeviceService {
         return devices;
     }
 
-    /**
-     * Checks whether this MIDI device can act as an input source.
-     */
     private boolean isInputDevice(MidiDevice.Info info) {
         try {
             MidiDevice device = MidiSystem.getMidiDevice(info);
@@ -44,10 +33,7 @@ public final class MidiDeviceService {
         }
     }
 
-    /**
-     * internal/Java MIDI devices
-     */
-
+    // internal/Java MIDI devices
     private boolean isUserFacingInputDevice(MidiDevice.Info info) {
         String name = clean(info.getName()).toLowerCase();
         String description = clean(info.getDescription()).toLowerCase();
@@ -71,12 +57,7 @@ public final class MidiDeviceService {
         return value == null ? "" : value.trim();
     }
 
-    /**
-     * Small display-friendly record for MIDI input device metadata.
-     *
-     * We keep this separate from MidiDevice.Info so the UI does not depend on
-     * Java Sound classes directly.
-     */
+    // lists user-facing MIDI input devices
     public record MidiInputDeviceInfo(
             String name,
             String vendor,

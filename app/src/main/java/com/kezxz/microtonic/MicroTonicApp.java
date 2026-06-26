@@ -10,17 +10,12 @@ import javafx.scene.Scene;
 import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
 
-/**
- * JavaFX entry point for MicroTonic
- *
- * keeps startup, scene creation, and shutdown cleanup in one place
- */
+// JavaFX entry point for MicroTonic
 public final class MicroTonicApp extends Application {
     private MainView mainView;
     private AppPreferences appPreferences;
     private AppState appState;
 
-    //called automatically by JavaFX when the app starts
     @Override
     public void start(Stage stage) {
         // load saved settings before UI binds to AppState

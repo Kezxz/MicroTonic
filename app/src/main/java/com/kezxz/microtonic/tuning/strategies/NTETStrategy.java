@@ -5,16 +5,7 @@ import com.kezxz.microtonic.tuning.TuningContext;
 import com.kezxz.microtonic.tuning.TuningStrategy;
 import com.kezxz.microtonic.util.MusicMath;
 
-/**
- * User-defined equal temperament.
- *
- * N-TET means the octave is divided into N equal steps.
- *
- * Examples:
- * - 12-TET = normal Western equal temperament
- * - 17-TET = octave split into 17 equal parts
- * - 24-TET = quarter-tone equal temperament
- */
+// user-defined equal temperament, divided into n equal steps
 public final class NTETStrategy implements TuningStrategy {
 
     private static final String[] TWELVE_TET_INTERVAL_NAMES = {
@@ -42,13 +33,6 @@ public final class NTETStrategy implements TuningStrategy {
         return "N-TET";
     }
 
-    /**
-     * Resolves a note index using the formula:
-     *
-     * frequency = tonicFrequency * 2^(noteIndex / divisions)
-     *
-     * The number of divisions comes from TuningContext.
-     */
     @Override
     public TunedNote resolve(int noteIndex, TuningContext context) {
         int divisions = context.divisionsPerOctave();

@@ -3,11 +3,7 @@ package com.kezxz.microtonic.sound;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * general MIDI instruments available in the instrument dropdown
- *
- * program numbers are zero-based for Java's MidiChannel API
- */
+// general MIDI instruments available in the instrument dropdown
 public enum GeneralMidiInstruments {
     ACOUSTIC_GRAND_PIANO("Acoustic Grand Piano", 0),
     ELECTRIC_PIANO_1("Electric Piano 1", 4),
@@ -44,7 +40,7 @@ public enum GeneralMidiInstruments {
         return displayNames().contains(displayName);
     }
 
-    // converts display name into a general MIDI program number -- unknown name falls back to Acoustic Grand Piano
+    // converts display name into a general MIDI program number
     public static int programForDisplayName(String displayName) {
         return Arrays.stream(values())
                 .filter(instrument -> instrument.displayName.equals(displayName))

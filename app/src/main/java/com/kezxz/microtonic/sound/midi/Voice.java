@@ -2,15 +2,7 @@ package com.kezxz.microtonic.sound.midi;
 
 import java.time.Instant;
 
-/**
- * Represents one currently sounding note.
- *
- * A Voice connects:
- * - the logical input note, such as keyboard key or MIDI note
- * - the tuned note's MIDI note number
- * - the allocated MIDI channel
- * - timing information used for simple voice stealing
- */
+// represents one currently sounding note
 public record Voice(
         long voiceId,
         int inputNoteId,

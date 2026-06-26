@@ -2,11 +2,7 @@ package com.kezxz.microtonic.sound;
 
 import com.kezxz.microtonic.tuning.TunedNote;
 
-/**
- * playback engine used by the app
- *
- * each platform can provide its own implementation
- */
+// playback engine, each platform provides its own implementation
 public interface SoundEngine extends AutoCloseable {
 
     void playTestNote(int inputNoteId, int noteIndex, TunedNote tunedNote);

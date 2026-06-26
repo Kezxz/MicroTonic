@@ -56,7 +56,7 @@ public final class MeantoneStrategy implements TuningStrategy {
 
     @Override
     public TunedNote resolve(int noteIndex, TuningContext context) {
-        // keeps begative indices aligned to musical octaves
+        // keeps negative indices aligned to musical octaves
         int octaveOffset = Math.floorDiv(noteIndex, CENTS.length);
         int scaleDegree = Math.floorMod(noteIndex, CENTS.length);
 

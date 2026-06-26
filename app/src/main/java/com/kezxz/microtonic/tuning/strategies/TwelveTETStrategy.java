@@ -6,10 +6,10 @@ import com.kezxz.microtonic.tuning.TuningStrategy;
 import com.kezxz.microtonic.util.MusicMath;
 
 /**
- * Standard 12-tone equal temperament.
+ * standard 12-tone equal temperament
  *
- * This is the familiar modern piano/guitar tuning where each octave is divided
- * into 12 equal steps.
+ * this is the familiar modern piano/guitar tuning where each octave is divided
+ * into 12 equal steps
  */
 public final class TwelveTETStrategy implements TuningStrategy {
 

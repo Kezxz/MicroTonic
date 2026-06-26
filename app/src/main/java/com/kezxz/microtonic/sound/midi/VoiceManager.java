@@ -8,15 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Tracks active MIDI voices.
- *
- * This class does not send MIDI messages itself.
- * Its job is only to decide:
- * - which channel a new note gets
- * - which voice belongs to a note-off event
- * - which old voice should be stolen if all channels are full
- */
+// tracks active MIDI voices and handles replacement/stealing when polyphony is exceeded
 public final class VoiceManager {
 
     private final ChannelAllocator channelAllocator;
@@ -32,12 +24,7 @@ public final class VoiceManager {
         this.channelAllocator = channelAllocator;
     }
 
-    /**
-     * Starts tracking a voice for a newly pressed note.
-     *
-     * If this input note is already active, the old voice is released first.
-     * This prevents duplicate stuck voices for repeated note-on events.
-     */
+    // starts tracking a voice for a newly pressed note
     public VoiceAllocation startVoice(
             int inputNoteId,
             int noteIndex,
@@ -94,11 +81,7 @@ public final class VoiceManager {
         return new VoiceAllocation(newVoice, replacedVoice, stolenVoice, stolenInputNoteId);
     }
 
-    /**
-     * Stops tracking the voice for a released note.
-     *
-     * Returns Optional.empty() if the input note was not active.
-     */
+    // stops tracking the voice for a released note
     public Optional<Voice> releaseVoice(int inputNoteId) {
         Voice voice = activeVoicesByInputNoteId.remove(inputNoteId);
 
@@ -110,11 +93,7 @@ public final class VoiceManager {
         return Optional.of(voice);
     }
 
-    /**
-     * Releases every active voice and resets the allocator.
-     *
-     * Useful for panic/all-notes-off behavior.
-     */
+    // releases every active voice and resets the allocator
     public void releaseAll() {
         activeVoicesByInputNoteId.clear();
         channelAllocator.reset();
@@ -134,14 +113,7 @@ public final class VoiceManager {
                 .min(Comparator.comparingLong(Voice::voiceId));
     }
 
-    /**
-     * Result of starting a voice.
-     *
-     * The future MIDI sound engine needs to know:
-     * - which new voice to play
-     * - whether an older voice was replaced
-     * - whether an older voice was stolen due to full polyphony
-     */
+    // result of starting a voice
     public record VoiceAllocation(
             Voice newVoice,
             Voice replacedVoice,

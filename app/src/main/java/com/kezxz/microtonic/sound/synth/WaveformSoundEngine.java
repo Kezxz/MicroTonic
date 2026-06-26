@@ -13,11 +13,8 @@ import javax.sound.sampled.SourceDataLine;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * SoundEngine implementation backed by Java sampled audio
- *
- * uses one lightweight playback thread per active synth voice
- */
+// SoundEngine implementation backed by Java's built-in MIDI synthesizer
+// uses one lightweight playback thread per active synth voice
 public final class WaveformSoundEngine implements SoundEngine {
 
     private static final float SAMPLE_RATE = 44_100.0f;

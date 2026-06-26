@@ -2,34 +2,17 @@ package com.kezxz.microtonic.tuning;
 
 import com.kezxz.microtonic.util.MusicMath;
 
-/**
- * Input settings used when resolving a note through a tuning strategy.
- *
- * This object answers questions like:
- * - What is the tonic?
- * - What frequency is the tonic?
- * - How many divisions per octave should N-TET use?
- */
+// settings used when resolving a note through a tuned note
 public record TuningContext(
         PitchClass tonic,
         double tonicFrequencyHz,
         int divisionsPerOctave
 ) {
-    /**
-     * Default musical context:
-     * - tonic C
-     * - C4 as the root frequency
-     * - 12 divisions per octave
-     */
+    // default context: C4 root, 12 divisions per octave
     public static TuningContext defaultContext() {
         return new TuningContext(PitchClass.C, MusicMath.C4_FREQUENCY_HZ, 12);
     }
 
-    /**
-     * Compact constructor for validation.
-     *
-     * In Java records, this runs automatically whenever a new TuningContext is created.
-     */
     public TuningContext {
         if (tonic == null) {
             throw new IllegalArgumentException("Tonic cannot be null.");

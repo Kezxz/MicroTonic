@@ -6,37 +6,12 @@ import com.kezxz.microtonic.tuning.TuningStrategy;
 import com.kezxz.microtonic.util.MusicMath;
 
 /**
- * 12-tone Pythagorean tuning strategy.
+ * 12-tone Pythagorean tuning strategy
  *
- * Pythagorean tuning is built mostly from pure perfect fifths with the ratio 3/2.
- *
- * This MVP version uses a fixed 12-tone chromatic ratio table ordered from the
- * selected tonic.
- *
- * Important:
- * - This gives us immediate chromatic playing.
- * - Enharmonic spellings are simplified for now.
- * - Later, we can add spelling-aware Pythagorean variants.
+ * Pythagorean tuning is built mostly from pure perfect fifths with the ratio 3/2
  */
 public final class PythagoreanStrategy implements TuningStrategy {
 
-    /**
-     * Pythagorean chromatic ratio table ordered by chromatic scale degree.
-     *
-     * Scale degree:
-     * 0  = tonic
-     * 1  = minor second
-     * 2  = major second
-     * 3  = minor third
-     * 4  = major third
-     * 5  = perfect fourth
-     * 6  = tritone
-     * 7  = perfect fifth
-     * 8  = minor sixth
-     * 9  = major sixth
-     * 10 = minor seventh
-     * 11 = major seventh
-     */
     private static final double[] RATIOS = {
             1.0 / 1.0,
             2187.0 / 2048.0,

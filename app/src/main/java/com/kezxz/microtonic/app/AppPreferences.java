@@ -9,9 +9,7 @@ import com.kezxz.microtonic.tuning.TuningSystem;
 
 import java.util.prefs.Preferences;
 
-/**
- * saves and loads settings between app launches
- */
+// saves and loads settings between app launches
 public final class AppPreferences {
 
     private static final String KEY_TUNING_SYSTEM = "tuningSystem";

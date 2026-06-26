@@ -14,11 +14,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-/**
- * SoundEngine implementation backed by Java's built-in MIDI synthesizer
- *
- * uses pitch bend and channel-per-note allocation for microtonal playback
- */
+// SoundEngine implementation backed by Java's built-in MIDI synthesizer
+// uses pitch bend and channel-per-note allocation for microtonal playback
 public final class MidiSoundEngine implements SoundEngine {
 
     private static final int DEFAULT_INSTRUMENT_PROGRAM = 0; // Acoustic Grand Piano
@@ -161,7 +158,6 @@ public final class MidiSoundEngine implements SoundEngine {
         }
 
         channel.noteOff(voice.midiNote());
-        // channel.setPitchBend(PitchBendCalculator.CENTER_PITCH_BEND);
     }
 
     private void ensureStarted() {

@@ -11,9 +11,7 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
-/**
- * in-memory model for user-seleced app settings
- */
+// in-memory model for user-seleced app settings
 public final class AppState {
 
     private final StringProperty tuningSystem = new SimpleStringProperty(

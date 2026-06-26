@@ -7,12 +7,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/**
- * Tests for the quarter-comma meantone tuning strategy.
- *
- * These tests verify that important note indices resolve to the expected
- * cents offsets from the tonic.
- */
 class MeantoneStrategyTest {
 
     private static final double TOLERANCE = 0.000001;

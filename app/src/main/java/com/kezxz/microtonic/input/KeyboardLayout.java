@@ -3,16 +3,8 @@ package com.kezxz.microtonic.input;
 import javafx.scene.input.KeyCode;
 import java.util.OptionalInt;
 
-/**
- * Maps computer keyboard keys to logical note indices.
- *
- * The note index is intentionally tuning-neutral.
- *
- * Example:
- * - In 12-TET, note index 1 means one semitone above tonic.
- * - In 24-TET, note index 1 means one quarter-tone above tonic.
- * - In JI, note index 1 means the next chromatic JI ratio.
- */
+// maps computer keyboard keys to logical note indices
+// noteIndex is intentionally tuning-neutral
 public final class KeyboardLayout {
 
     private KeyboardLayout() {

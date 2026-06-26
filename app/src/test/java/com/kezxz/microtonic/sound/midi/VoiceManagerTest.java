@@ -7,9 +7,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Tests for voice tracking and MIDI channel assignment.
- */
 class VoiceManagerTest {
 
     private static final TunedNote C4 = new TunedNote(

@@ -3,10 +3,8 @@ package com.kezxz.microtonic.tuning;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * represents the 12 pitch classes used by the tonic selector
- * enharmonic spellings are grouped together
- */
+// represents the 12 pitch classes used by the tonic selector
+// enharmonic spellings are grouped together
 public enum PitchClass {
     C("C", 0),
     C_SHARP_D_FLAT("C#/Db", 1),
